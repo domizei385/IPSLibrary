@@ -35,6 +35,7 @@
 
     $moduleManager->VersionHandler()->CheckModuleVersion('IPS','2.50');
     $moduleManager->VersionHandler()->CheckModuleVersion('IPSModuleManager','2.50.2');
+	$moduleManager->VersionHandler()->CheckModuleVersion('IPSLogger','2.50.2');
 
     IPSUtils_Include ("IPSInstaller.inc.php",            "IPSLibrary::install::IPSInstaller");
     IPSUtils_Include ('NetIO230B.inc.php',      'IPSLibrary::app::hardware::NetIO230B');
@@ -95,27 +96,6 @@
             $Name = "Port".$i;
             $ControlId = CreateVariable($Name,  0 /*Boolean*/, $regVarId, $Order, '~Switch', $ID_ScriptNetIO230BInterface, null, 'Power');
             $Order += 10;
-        }
-    }
-    
-    Register_PhpErrorHandler($moduleManager);
-
-    // ------------------------------------------------------------------------------------------------
-    function Register_PhpErrorHandler($moduleManager) {
-        $file = IPS_GetKernelDir().'scripts\\__autoload.php';
-
-        if (!file_exists($file)) {
-            throw new Exception($file.' could NOT be found!', E_USER_ERROR);
-        }
-        $FileContent = file_get_contents($file);
-
-        $pos = strpos($FileContent, 'IPSLogger_PhpErrorHandler.inc.php');
-
-        if ($pos === false) {
-            $includeCommand = '    IPSUtils_Include("IPSLogger_PhpErrorHandler.inc.php", "IPSLibrary::app::core::IPSLogger");';
-            $FileContent = str_replace('?>', $includeCommand.PHP_EOL.'?>', $FileContent);
-            $moduleManager->LogHandler()->Log('Register Php ErrorHandler of IPSLogger in File __autoload.php');
-            file_put_contents($file, $FileContent);
         }
     }
     

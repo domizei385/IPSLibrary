@@ -35,6 +35,7 @@
 
     $moduleManager->VersionHandler()->CheckModuleVersion('IPS','2.50');
     $moduleManager->VersionHandler()->CheckModuleVersion('IPSModuleManager','2.50.2');
+	$moduleManager->VersionHandler()->CheckModuleVersion('IPSLogger','2.50.2');
 
     IPSUtils_Include ("IPSInstaller.inc.php",           "IPSLibrary::install::IPSInstaller");
     IPSUtils_Include ("Security_Configuration.inc.php", "IPSLibrary::config::modules::Security");
@@ -117,38 +118,7 @@
 		CreateVariable(v_ALARM_MODE, 1 /*Integer*/, $parentCategory, 0, "Security_AlarmModes", $scriptId, 0);
 	}
 	
-	Register_PhpErrorHandler($moduleManager);
-
-    // ------------------------------------------------------------------------------------------------
-    function Register_PhpErrorHandler($moduleManager) {
-        $file = IPS_GetKernelDir().'scripts\\__autoload.php';
-
-        if (!file_exists($file)) {
-            throw new Exception($file.' could NOT be found!', E_USER_ERROR);
-        }
-        $FileContent = file_get_contents($file);
-
-        $pos = strpos($FileContent, 'IPSLogger_PhpErrorHandler.inc.php');
-
-        if ($pos === false) {
-            $includeCommand = '    IPSUtils_Include("IPSLogger_PhpErrorHandler.inc.php", "IPSLibrary::app::core::IPSLogger");';
-            $FileContent = str_replace('?>', $includeCommand.PHP_EOL.'?>', $FileContent);
-            $moduleManager->LogHandler()->Log('Register Php ErrorHandler of IPSLogger in File __autoload.php');
-            file_put_contents($file, $FileContent);
-        }
-    }
-    
     return;
-    
-    function GetModuleId($moduleName) {
-        foreach (IPS_GetModuleList() as $moduleId) {
-            $module = IPS_GetModule($moduleId);
-            if ($module['ModuleName'] == $moduleName) {
-                return $moduleId;
-            }
-        }
-        return '';
-    }
     
     // ----------------------------------------------------------------------------------------------------------------------------
     // Webfront Installation
@@ -205,30 +175,6 @@
             CreateLink("Security@".$device[DEVICE_IP], $device["STATE_ID"],    $ID_CategoryiPhone, 10);
         }
     }
-    
-    if(class_exists('Security')) {
-        echo 'Register Security for MessageHandler';
-        //$instanceIdAudioMax = IPSUtil_ObjectIDByPath('Program.IPSLibrary.data.hardware.Security.AudioMax_Server');
-        //$instanceIdVariable = IPSUtil_ObjectIDByPath('Program.IPSLibrary.data.hardware.Security.AudioMax_Server.LAST_COMMAND');
-        //IPSMessageHandler::RegisterOnChangeEvent($instanceIdVariable/*Var*/, 'IPSComponentAVControl_AudioMax,'.$instanceIdAudioMax, 'IPSModuleAVControl_Entertainment');
-    }
-    
-    CreateProfile_DectStatus();
-    
-    function CreateProfile_DectStatus() {
-        $Name = "Security_DectStatus";
-        @IPS_DeleteVariableProfile($Name);
-        IPS_CreateVariableProfile($Name, 1);
-        IPS_SetVariableProfileText($Name, "", "");
-        IPS_SetVariableProfileValues($Name, 0, 0, 0);
-        IPS_SetVariableProfileDigits($Name, 0);
-        IPS_SetVariableProfileIcon($Name, "");
-        IPS_SetVariableProfileAssociation($Name, 0, "Getrennt", "", 0xaaaaaa);
-        IPS_SetVariableProfileAssociation($Name, 1, "Paging", "", 0x0000CD);
-        IPS_SetVariableProfileAssociation($Name, 2, "Verbunden", "", 0x32CD32);
-        IPS_SetVariableProfileAssociation($Name, 3, "Verbunden", "", 0x32CD32);
-        IPS_SetVariableProfileAssociation($Name, 4, "Verbindungsaufbau", "", 0xFFFF00);
-    }
-
+	
     /** @}*/
 ?>
