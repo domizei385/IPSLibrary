@@ -363,8 +363,8 @@
 					IPS_SetName($timerId, $timerName);
 					IPS_SetIdent($timerId, $timerName);
 				}
-				$hours = $timerValue % 60*60;
-				$mins  = $timerValue % 60;
+				$hours = (int)($timerValue / (60*60));
+				$mins  = (int)($timerValue / 60);
 				$secs  = $timerValue;
 				if ($startTime=='Once') {
 					$nextTime = strtotime('+'.$timerValue.' sec');
@@ -569,9 +569,18 @@
 			$navTime    = GetValue($variableIdNavFile);
 			$navPos     = -1;
 
-			$fileList   = scandir($directory, 0);
-			$fileList   = array_diff($fileList, Array('.','..'));
-			$fileList   = explode('|',implode('|',$fileList));
+			$fileList2   = scandir($directory, 0);
+			$fileList2   = array_diff($fileList2, Array('.','..'));
+			$fileList2   = explode('|',implode('|',$fileList2));
+
+			$fileList    = array();
+			foreach($fileList2 as $idx=>$file) {
+				$fileExt  = pathinfo($file, PATHINFO_EXTENSION);
+				if ($fileExt=='jpg') {
+					$fileList[] = $file;
+				}
+			}
+			
 			foreach($fileList as $idx=>$file) {
 				$filename = basename($file);
 				if ($filename==$navTime.'.jpg') {
