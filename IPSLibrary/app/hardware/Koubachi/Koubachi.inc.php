@@ -73,7 +73,7 @@
 	}
 	
 	/**
-	 * Evaluate the given attribute list's "type" and "isNil" parameter to determine the target type.
+	 * Evaluate the given attribute list's "type" and "isNull" parameter to determine the target type.
 	 */
 	function getIPSValueType($nodeAttributes) {
 		$type = false;
@@ -99,13 +99,17 @@
 		return $type;
 	}
 	
+	function Koubachi_getIPSValueTypeFromNode($node) {
+		return getIPSValueType($node->attributes);
+	}
+	
 	function Koubachi_setValue($varId, $node) {
 		if($varId === false || $varId == 0) {
 			IPSLogger_Err(__file__, "Unable to set a koubachi value with var id 0 or false");
 			return;
 		}
 	
-		$valueType = getIPSValueType($node->attributes);
+		$valueType = Koubachi_getIPSValueTypeFromNode($node);
 		if($valueType["isNull"] === true) {
 			// get value type from existing variable and set default
 			//IPSLogger_Dbg(__file__, "VariableType: ".print_r(IPS_GetVariable($varId)["VariableValue"]["ValueType"], true));
@@ -162,7 +166,7 @@
 		
 		$correctType = $ipsType == $targetVariableType;
 		if(!$correctType) {
-			throw new \Exception("Value types not matching for variable '".IPS_GetName($varId)."'. (New Value type: ".$ipsType.", Target Variable type: ".$targetVariableType);
+			IPSLogger_Wrn(__file__, "Value types not matching for variable '".IPS_GetName($varId)."'. (New Value type: ".$ipsType.", Target Variable type: ".$targetVariableType);
 		}
 	}
 	
@@ -210,16 +214,17 @@
     }
 	
 	function Koubachi_CreateVariable($parentId, $node, $varName, $typeName = "") {
-		$valueType = getIPSValueType($node->attributes);
+		$valueType = Koubachi_getIPSValueTypeFromNode($node);
 		$hasTypeFromValue = $valueType["isNull"] === false;
-		
+		//IPSLogger_Dbg(__file__, $varName." - Type from value: ".print_r($valueType, true));
 		if($typeName !== "") {
 			$hasTypeFromDefinition = true;
 			$staticValueType = getIPSTypeFromXMLType($typeName);
 		} else {
 			$hasTypeFromDefinition = false;
+			$staticValueType = null;
 		}
-		
+		//IPSLogger_Dbg(__file__, $varName." - Static value type: ".print_r($staticValueType, true));
 		// check if dynamic and static value types are matching
 		if($hasTypeFromValue && $hasTypeFromDefinition && $staticValueType["IPS"] != $valueType["IPS"]) {
 			IPSLogger_Dbg(__file__, "Value types not matching for variable '".$varName."'. (Manual type: ".$staticValueType["IPS"].", Auto type: ".$valueType["IPS"]);
@@ -241,7 +246,7 @@
 		return $varId;
 	}
 	
-	function Koubachi_CreateSetVariable($objectCategoryId, $objectNode, $xmlNodeName, $typeName, $enableLogging = false) {
+	function Koubachi_CreateAndSetVariable($objectCategoryId, $objectNode, $xmlNodeName, $typeName, $enableLogging = false) {
 		$node = getNode($objectNode, $xmlNodeName);
 		// check if the variable was already created. if not, create it.
 		$varId = @IPS_GetVariableIDByName($xmlNodeName, $objectCategoryId);
@@ -272,7 +277,7 @@
 			$vars = getDeviceVariableTypeMapping();
 			foreach($vars as $xmlNodeName => $settings) {
 				$enableLogging = isset($settings[1]) && $settings[1] == true;
-				Koubachi_CreateSetVariable($categoryId, $device, $xmlNodeName, $settings[0], $enableLogging);
+				Koubachi_CreateAndSetVariable($categoryId, $device, $xmlNodeName, $settings[0], $enableLogging);
 			}
 		}
 		
@@ -296,7 +301,7 @@
 			$vars = getPlantVariableTypeMapping();
 			foreach($vars as $varName => $settings) {
 				$enableLogging = isset($settings[1]) && $settings[1] == true;
-				$value = Koubachi_CreateSetVariable($categoryId, $xmlPlant, $varName, $settings[0], $enableLogging);
+				$value = Koubachi_CreateAndSetVariable($categoryId, $xmlPlant, $varName, $settings[0], $enableLogging);
 				$plant[$varName] = $value;
 			}
 			$plants[] = $plant;
