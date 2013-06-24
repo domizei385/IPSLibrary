@@ -7,7 +7,7 @@
 	 * @version
 	 * Version 2.50.1, 31.01.2012<br/>
 	 *
-	 * Dieses Script enthält die Funktionen, die die Messages zu den diversen Outputs schicken.
+	 * Dieses Script enthï¿½lt die Funktionen, die die Messages zu den diversen Outputs schicken.
 	 *
 	 */
 	include_once "IPSLogger_Constants.inc.php";
@@ -37,7 +37,7 @@
 			return;
 		}
         IPSLogger_invokeLoggers($LogLevel, $LogType, $Context, $Msg, $StackTxt, $Priority);
-    }
+	}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_WriteFile($Directory, $File, $Text, $ID_OutEnabled) {
@@ -72,7 +72,7 @@
 
 			$File = 'IPSLogger_'.date('Ymd').'.'.c_File_Extension;
 			IPSLogger_WriteFile(c_File_Directory, $File, $Out, c_ID_FileOutEnabled);
-	}
+		}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutLog4IPS($LogLevel, $LogType, $Context, $Msg) {
@@ -87,7 +87,7 @@
 
 			$File = 'IPSLogger_'.date('Ymd').'.'.c_Log4IPS_Extension;
 			IPSLogger_WriteFile(c_Log4IPS_Directory, $File, $Out, c_ID_Log4IPSOutEnabled);
-	}
+		}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutEMail($LogLevel, $LogType, $Context, $Msg, $Priority) {
@@ -105,19 +105,19 @@
 					IPS_SetScriptTimer(c_ID_ScriptSendMail, GetValue(c_ID_EMailOutDelay));
 				}
 			}
-	}
+		}
 	
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutIPS($LogLevel, $LogType, $Context, $Msg) {
 			$Out = $LogType.': '.$Msg;
 			IPS_LogMessage($Context, $Out);
-	}
+		}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutSingle($LogLevel, $LogType, $Context, $Msg) {
 			$Out = '<div style="'.IPSLogger_LogTypeStyle($LogType).'">'.$LogType.': '.$Msg.'</div>';
 			SetValue(c_ID_SingleOutMsg, $Out);
-	}
+		}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutHtml($LogLevel, $LogType, $Context, $Msg) {
@@ -179,7 +179,7 @@
 				SetValue(c_ID_HtmlOutMsgList, $TablePrefix.$MsgList.$Out.'</table>');
 			}
 			SetValue(c_ID_HtmlOutMsgId, $CurrentMsgId);
-	}
+		}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutEcho($LogLevel, $LogType, $Context, $Msg) {
@@ -201,7 +201,7 @@
 			$Out .= $prefix.$Msg.c_lf;
 
 			echo $Out;
-	}
+		}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_SetOutEcho($OutEnabled, $LogLevel=null) {
@@ -220,7 +220,7 @@
  										'event'			=> $Context,
 										'description'	=> utf8_encode($Msg),
 										'priority'		=> 0));
-	}
+		}
 	
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_SendProwlMessage($Event, $Description, $Priority) {
