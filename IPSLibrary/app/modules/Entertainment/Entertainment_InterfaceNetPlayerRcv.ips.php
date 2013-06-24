@@ -9,8 +9,8 @@
 	 * Version 2.50.1, 31.01.2012<br/>
 	 *
 	 * Script zur Anbindung des NetPlayers. Dieses Script ist in der Entertainment Konfiguration
-	 * Entertainment_Configuration.ips.php als Empfangs Script für den NetPlayer hinterlegt
-	 * und wird immer aufgerufen sobald sich die spezifizierte Variable des NetPlayers ändert.
+	 * Entertainment_Configuration.ips.php als Empfangs Script fï¿½r den NetPlayer hinterlegt
+	 * und wird immer aufgerufen sobald sich die spezifizierte Variable des NetPlayers ï¿½ndert.
 	 *
     * Anbindung des NetPlayers
 	 *

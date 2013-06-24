@@ -5,10 +5,10 @@
 	 *
 	 * Interface zu externen Komponenten
 	 *
-	 * Dieses Script ist als Aktions Script für alle Variablen hinterlegt, die über das WebFront
-	 * verändert werden können.
+	 * Dieses Script ist als Aktions Script fï¿½r alle Variablen hinterlegt, die ï¿½ber das WebFront
+	 * verï¿½ndert werden kï¿½nnen.
 	 *
-	 * Zusätzlich wird es auch von Register Variablen bzw. anderen Variablen per Event getriggert.
+	 * Zusï¿½tzlich wird es auch von Register Variablen bzw. anderen Variablen per Event getriggert.
 	 *
 	 * @file          Entertainment_Interface.ips.php
 	 * @author        Andreas Brauneis
@@ -18,6 +18,10 @@
 	 */
 
 	include_once "Entertainment.inc.php";
+    include_once "Entertainment_DeviceSemaphore.inc.php";
+    
+    if(Entertainment_requestSemaphore(sem_ENTERTAINMENT)) {
+try {
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	// WebFront
@@ -51,6 +55,12 @@
 				IPSLogger_Err(__file__, 'Unknown Control with ID='.$_IPS['VARIABLE'].' !');
 		}
 	}
+}
+catch (Exception $e) {
+    IPSLogger_Err(__file__, 'Error in Entertainment_Interface');
+}
+	Entertainment_freeSemaphore(sem_ENTERTAINMENT);
+}
 
   /** @}*/
 ?>
