@@ -111,6 +111,9 @@
         $CategoryIdStateSend = $fritzBox->getStateCategoryId("Send");
         
         $internetDslStatus = $fritzBox->getInternetDSL();
+		if(!$internetDslStatus) {
+			return;
+		}
         $profiles = array();
         foreach($internetDslStatus as $measure) {
             $varName = $measure[0];

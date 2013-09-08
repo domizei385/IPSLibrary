@@ -15,6 +15,7 @@
     
     class FritzBox {
         private $pageLogin = "../html/login_sid.xml";
+		private $login_sid = "login_sid.lua";
         private $fritzSeite = "../html/de/menus/menu2.html";
         // validity of session in minutes
         private static $sessionValidity = 30;
@@ -72,28 +73,43 @@
                 $this->isConnected = true;
             } else {
                 curl_setopt($this->connection, CURLOPT_POSTFIELDS, "getpage=".$this->pageLogin);
-                
                 $login = curl_exec($this->connection);
-                $session_status_simplexml = simplexml_load_string($login);
-
-                if ($session_status_simplexml->iswriteaccess == 1) {
-                    IPSLogger_Inf(__file__, "Already connected with SID ".$this->SID." for ".date("H:i", $this->sidVariable->value)."h");
-                    $this->SID = $session_status_simplexml->SID;
-                    $this->sidVariable->value = $this->SID;
+                $htmlDom = new DomDocument();
+                $htmlDom->loadHtml($login);
+                //$finder = new DomXPath($htmlDom);
+					 //$classname="my-class";
+					 //$nodes = $finder->query("//input[@name = 'sid']");
+					 
+					 $sid = $this->getLoginSid();
+					
+					 //$session_status_simplexml = simplexml_import_dom($htmlDom);
+                // $session_status_simplexml = simplexml_load_string($login);
+					 //print_r($session_status_simplexml->iswriteaccess);
+                //if ($session_status_simplexml->iswriteaccess == 1) {
+                if ($sid->SID != "0000000000000000") {
+					$this->SID = $sid->SID;
+					IPSLogger_Inf(__file__, "Already connected with SID ".$this->SID." for ".date("H:i", $this->sidVariable->value)."h");
                     
+                    $this->sidVariable->value = $this->SID;
                     $this->isConnected = true;
                 } else {
-                    //IPSLogger_Inf(__file__, "Initiating login");
-                    $challenge = $session_status_simplexml->Challenge;
-                    $response = $challenge . '-' . md5(mb_convert_encoding($challenge . '-' . $this->password, "UCS-2LE", "UTF-8"));
-                    curl_setopt($this->connection, CURLOPT_POSTFIELDS, "login:command/response={$response}&getpage=".$this->fritzSeite);
-                    preg_match('/name="sid" value="([0-9a-f]*)"/', curl_exec($this->connection), $matches);
-                    if (isset($matches[1]) && $matches[1] != '0000000000000000') {
-                        $newSID = $matches[1];
+                    IPSLogger_Inf(__file__, "Initiating login");
+                    
+                    $challenge = $sid->Challenge;
+                    $response = $challenge . '-' . md5(mb_convert_encoding($challenge . '-' . $this->password, "UCS-2LE", "UTF-16"));
+					
+					$conn = $this->getConnection($this->login_sid);
+					curl_setopt($conn, CURLOPT_POSTFIELDS, "username=&response=$response");
+					$result = curl_exec($conn);
+					
+					//preg_match('/name="sid" value="([0-9a-f]*)"/', $result, $matches);
+					//echo "Result: ".print_r($matches, true);
+                    if ($result != '0000000000000000') {
+                        $newSID = $result;
                         $this->SID = $newSID;
                         $this->sidVariable->value = $this->SID;
                         
-                        //IPSLogger_Trc(__file__, "Aquired new SID ".$newSID);
+                        IPSLogger_Trc(__file__, "Aquired new SID ".$newSID);
                         $this->isConnected = true;
                     } else {
                         $this->isConnected = false;
@@ -109,12 +125,26 @@
             return $this->isConnected;
         }
         
+		private function getConnection($link) {
+			$conn = curl_init("http://" . $this->ip . "/$link");
+            curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
+			return $conn;
+		}
+		
+        private function getLoginSid() {
+      		$conn = curl_init("http://" . $this->ip . "/login_sid.lua");
+            curl_setopt($conn, CURLOPT_RETURNTRANSFER, 1);
+            $result = curl_exec($conn);
+            $loginSid = simplexml_load_string($result);
+            return $loginSid;
+        }
+        
         public function requestPage($page, $var = null) {
             if($page == null) {
                 echo "Error: 'page' parameter is null";
                 return false;
             }
-            
+
             $retries = 2;
             while($retries > 0 && $this->setupConnectionAndLogin()) {
                 curl_setopt($this->connection, CURLOPT_POSTFIELDS, "getpage={$page}&sid=".$this->SID.($var != null && count($var) > 0 ? "&".$var : ""));
@@ -134,9 +164,36 @@
             }
             return false;
         }
+		
+		public function requestPage2($page, $var = null) {
+            if($page == null) {
+                echo "Error: 'page' parameter is null";
+                return false;
+            }
+//IPSLogger_Inf(__file__, "Page:"."$page?sid=".$this->SID.($var != null && count($var) > 0 ? "&".$var : ""));
+            $retries = 2;
+            while($retries > 0 && $this->setupConnectionAndLogin()) {
+			
+                curl_setopt($this->connection, CURLOPT_POSTFIELDS, "$page?sid=".$this->SID.($var != null && count($var) > 0 ? "&".$var : ""));
+                try {
+                    $data = curl_exec($this->connection);
+                    if(preg_match("/FRITZ!Box Anmeldung/", $data)) {
+                        $this->sidVariable->value = "";
+                        $this->isConnected = false;
+                    } else {
+                        //echo "Received data: $page\n";
+                        return $data;
+                    }
+                } catch (Exception $e) {
+                    return false;
+                }
+                --$retries;
+            }
+            return false;
+        }
         
         public function getInternetDSLRaw() {
-            $dslDetails = $this->requestPage($this->fritzSeite, "var:menu=internet&var:pagename=adsl");
+            $dslDetails = $this->requestPage2("internet/dsl_stats_tab.lua", "");
             return $dslDetails;
         }
         
@@ -172,7 +229,7 @@
             }
             return $return;
         }
-        
+
         public function getDectMonitorData() {
             $data = $this->requestPage("../html/de/dect/dectmonidaten.xml", "");
             
