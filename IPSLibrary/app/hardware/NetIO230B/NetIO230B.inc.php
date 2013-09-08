@@ -22,11 +22,13 @@
     define("v_NETIO_SETTINGS", "Settings");
     define("v_NETIO_LAST_ACTION", "LastAction");
     define("v_NETIO_LAST_WARNING", "LAST_CMD_WARNING");
-    
+	define("v_NETIO_LAST_WARNING_SEND_COMMAND", "LAST_SEND_CMD_WARNING");
+	    
     define("NETIO_PORT_NOCHANGE", "u");
     
     // actions
-    define("ACTION_LOGIN", 1);
+    define("ACTION_NONE", 0);
+	define("ACTION_LOGIN", 1);
     define("ACTION_LIST_PORT", 2);
     define("ACTION_SET_PORT", 3);
     define("ACTION_LIST_TRIGGER_PORT", 4);
@@ -40,6 +42,7 @@
         
         private $regVarId;
         private $settings;
+		private $settingsId;
         private $settingsLoaded = false;
         private $loggedIn = false;
         private $lastActionVar;
@@ -51,15 +54,10 @@
                 throw new Exception("Unable to create NetIO230B instance");
             }
             $this->regVarId = $regVarId;
-            //IPSLogger_Err(__file__, "RegVar:".$regVarId);
             // read settings
-            $settingsId = IPS_GetObjectIDByName(v_NETIO_SETTINGS, $regVarId);
-            if($settingsId == false || !IPS_ObjectExists($settingsId)) {
-                IPSLogger_Err(__file__, "Category with $settingsId does not exist. Unable to send commands to NetIO device.");
-                throw new Exception("Unable to create NetIO230B instance");
-            }
+            $this->initSettingsId();
             
-            if(!$this->loadSettings($settingsId)) {
+            if(!$this->loadSettings()) {
                 throw new Exception("Unable to create NetIO230B instance");
             }
             
@@ -67,7 +65,7 @@
             $this->lastActionVar = new Variable(v_NETIO_LAST_ACTION, $regVarId);
             
             // check whether the device is available on the network
-            if(!$this->isDeviceAvailable($settingsId)) {
+            if(!$this->isDeviceAvailable()) {
                 IPSLogger_Trc(__file__, "No device available at ".$this->settings[v_IP]);
                 //throw new Exception("Unable to create NetIO230B instance");
 				return;
@@ -81,26 +79,34 @@
                 throw new Exception("Unable to create NetIO230B instance");
             }
         }
+		
+		private function initSettingsId() {
+			$this->settingsId = IPS_GetObjectIDByName(v_NETIO_SETTINGS, $this->regVarId);
+            if($this->settingsId == false || !IPS_ObjectExists($this->settingsId)) {
+                IPSLogger_Err(__file__, "Category with $settingsId does not exist. Unable to send commands to NetIO device.");
+                throw new Exception("Unable to create NetIO230B instance");
+            }
+		}
         
         /**
          * Extracts and returns the login credentials for the given netIO230 device from variables with the names defined in v_USERNAME, v_PASSWORD and V_IP.
          */
-        private function loadSettings($settingsId) {
+        private function loadSettings() {
             if($this->settingsLoaded) {
                 return true;
             }
             
-            $usernameID = IPS_GetVariableIDByName(v_USERNAME, $settingsId);
-            $passwordID = IPS_GetVariableIDByName(v_PASSWORD, $settingsId);
-            $ipID = IPS_GetVariableIDByName(v_IP, $settingsId);
+            $usernameID = IPS_GetVariableIDByName(v_USERNAME, $this->settingsId);
+            $passwordID = IPS_GetVariableIDByName(v_PASSWORD, $this->settingsId);
+            $ipID = IPS_GetVariableIDByName(v_IP, $this->settingsId);
 
             if($usernameID == false || $passwordID == false) {
-                $msg = v_USERNAME." or ".v_PASSWORD." variable missing in category ".$settingsId;
+                $msg = v_USERNAME." or ".v_PASSWORD." variable missing in category ".$this->settingsId;
                 IPSLogger_Err(__file__, $msg);
                 return false;
             }
             if($ipID == false) {
-                $msg = v_IP." variable missing in category ".$settingsId;
+                $msg = v_IP." variable missing in category ".$this->settingsId;
                 IPSLogger_Err(__file__, $msg);
                 return false;
             }
@@ -118,45 +124,84 @@
             
             return true;
         }
-        
-        private function isDeviceAvailable($settingsID) {
+		
+        private function isDeviceAvailable() {
             $result = true;
             
-            $lastWarningVar = new Variable(v_NETIO_LAST_WARNING, $settingsID);
+            $lastWarningVar = new Variable(v_NETIO_LAST_WARNING, $this->settingsId);
             $lastWarningIsInitial = $lastWarningVar->isInitial();
             
 			$MAX_RETRIES = 5;
+			$func = function() {return @fsockopen($this->settings[v_IP], 80, $errno, $errstr, 1);};
+			$result = $this->executeWithRetry($func, $lastWarningVar, $MAX_RETRIES, $this->settings[v_IP]);
+			
+			if(!$result && $this->shouldLog($lastWarningVar)) {
+				IPSLogger_Wrn(__file__, "No response from NetIO device after ".$MAX_RETRIES." retries @ ".$this->settings[v_IP]);
+			}
+            return $result;
+        }
+		
+		private function executeWithRetry($function, $lastWarningVar, $maxRetries = 3, $logMessage = "", $sleep = 0) {
 			$retries = 0;
 			
-			while($retries < $MAX_RETRIES) {
+			if(is_array($function)) {
+				$func = $function[0];
+				$parameter = $function[1];
+			} else {
+				$func = $function;
+			}
+			
+			while($retries < $maxRetries) {
 				// check if device is available at port 80
-				$resp = @fsockopen($this->settings[v_IP], 80, $errno, $errstr, 1);
+				if(isset($parameter)) {
+					$resp = $func($parameter);
+				} else {
+					$resp = $func();
+				}
+
 				if(!$resp) {
-					$nextErrorLogTime = $lastWarningVar->value + (self::$connectionErrorLogInterval * 60);
-					// if no connection could be made, log an error every $connectionErrorLogInterval minutes
-					$now = time();
-					if($lastWarningIsInitial || $now > $nextErrorLogTime) {
-						$lastWarningVar->value = $now;
-					} else if(!$lastWarningIsInitial) {
-						// error was already sent within the last $connectionErrorLogInterval hours
+					if($this->shouldLog($lastWarningVar)) {
+						IPSLogger_Trc(__file__, "Retry ".($retries + 1)."/".$maxRetries." @ ".$logMessage);
 					}
-					IPSLogger_Trc(__file__, "Retry ".($retries + 1)."/".$MAX_RETRIES." @ ".$this->settings[v_IP]);
-					$result = false;
 					$retries++;
-				} else if($resp && !$lastWarningIsInitial) {
-					// reset last warning value, when a connection could be made again
-					// $lastWarningVar->value = 0;
+					usleep($sleep);
+				} else {
 					return true;
 				}
 			}
-			IPSLogger_Wrn(__file__, "No response from NetIO device after ".$MAX_RETRIES." retries @ ".$this->settings[v_IP]);
-            return $result;
-        }
+			return false;
+		}
+		
+		private function shouldLog($lastWarningVar) {
+			$lastWarningIsInitial = $lastWarningVar->isInitial();
+			$nextErrorLogTime = $lastWarningVar->value + (self::$connectionErrorLogInterval * 60);
+			// if no connection could be made, log an error every $connectionErrorLogInterval minutes
+			$now = time();
+			if($lastWarningIsInitial || $now > $nextErrorLogTime) {
+				$lastWarningVar->value = $now;
+				return true;
+			} else if(!$lastWarningIsInitial) {
+				// error was already sent within the last $connectionErrorLogInterval hours
+			}
+			return false;
+		}
         
         private function sendCommand($action, $command) {
 			$this->lastActionVar->value = $action;
-            @CSCK_SendText($this->socketId, $command."\x0D\x0A");
-            //RegVar_SendText($this->regVarId, $command."\x0D\x0A");
+			
+			$result = false;
+            
+            $lastWarningVar = new Variable(v_NETIO_LAST_WARNING_SEND_COMMAND, $this->settingsId);
+            $lastWarningIsInitial = $lastWarningVar->isInitial();
+            
+			$MAX_RETRIES = 5;
+			$func = function($command) {return @CSCK_SendText($this->socketId, $command."\x0D\x0A");};
+			$result = $this->executeWithRetry(array(0 => $func, 1 => $command), $lastWarningVar, $MAX_RETRIES, $this->settings[v_IP], 50000);
+			
+			if(!$result && $this->shouldLog($lastWarningVar)) {
+				IPSLogger_Wrn(__file__, "Unable to send command'".$command."' after ".$MAX_RETRIES." retries @ ".$this->settings[v_IP]);
+			}
+            return $result;
         }
         
         /**
@@ -188,6 +233,10 @@
                 }
             }
         }
+		
+		private function isSwitchRequest($command) {
+			return $command == ACTION_SET_PORT || $command == ACTION_LIST_TRIGGER_PORT;
+		}
         
         public function handleResponse($value) {
             $statusCode = substr($value, 0, 3);
@@ -215,7 +264,14 @@
             }
             switch ($statusCode) {
                 case "100":
+					if($this->isSwitchRequest($lastAction)) {
+						// TODO: run last command again, after login
+						IPSLogger_Wrn(__file__, "Switch request failed due to expired login");
+					}
                     $this->login($data);
+                    break;
+				case "130":
+                    // Connection timeout
                     break;
                 case "250":
                     // request successful
@@ -226,6 +282,7 @@
                     } else if($lastAction == ACTION_LIST_TRIGGER_PORT) {
                         $this->updateStatus();
                     }
+					$lastAction = ACTION_NONE;
                     break;
                 case "504":
                     // already logged in
@@ -252,13 +309,14 @@
                     //IPSLogger_Dbg(__file__, "Unknown status code: $statusCode - lastAction: $lastAction");
             }
         }
-        
+		
         /**
          * Set status of the given port id. 
          */
         public function setPortStatusByPortId($portID, $status) {
-            if(!is_numeric($portID) || $portID < 0) {
-                IPSLogger_Not(__file__, "Unable to set port status. Invalid port id $portID");
+            IPSLogger_Dbg(__file__, ($status ? "Enabling" : "Disabling")." port '$portID'");
+			if(!is_numeric($portID) || $portID < 0) {
+                IPSLogger_Wrn(__file__, "Unable to set port status. Invalid port id $portID");
                 return;
             }
             $regVarId = IPS_GetParent($portID);
@@ -271,7 +329,7 @@
             $portName = $portVarObject["ObjectName"];
             $portNumber = substr($portName, 4, strlen($portName));
             if(!is_numeric($portNumber) || $portNumber < 1 || $portNumber > self::$PORTS) {
-                IPSLogger_Not(__file__, "Port number '".$portNumber."' is not in range [1,".self::$PORTS."]");
+                IPSLogger_Wrn(__file__, "Port number '".$portNumber."' is not in range [1,".self::$PORTS."]");
                 return;
             }
             if($status === null) {

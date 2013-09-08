@@ -19,7 +19,7 @@
                     NetIO230B::getInstanceFromPortIdAndSetStatus($IPS_VARIABLE, false);
                     break;
                 case "poweron":
-                    NetIO230B::getInstanceFromPortIdAndSetStatus($IPS_VARIABLE, false);
+                    NetIO230B::getInstanceFromPortIdAndSetStatus($IPS_VARIABLE, true);
                     break;
                 case "getStatus":
                     if(!isset($source)) {

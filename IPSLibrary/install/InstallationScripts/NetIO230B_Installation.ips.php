@@ -98,6 +98,11 @@
             $Order += 10;
         }
     }
+	
+	$moduleInfos = $moduleManager->getModuleInfos('NetIO230B');
+	if($moduleInfos->Installed === "Yes") {
+		
+	}
     
     /** @}*/
 ?>
