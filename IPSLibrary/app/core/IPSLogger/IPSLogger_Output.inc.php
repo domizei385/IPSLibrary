@@ -90,6 +90,43 @@
 		}
 
 	// ---------------------------------------------------------------------------------------------------------------------------
+	function IPSLogger_OutSysLog($LogLevel, $LogType, $Context, $Msg) {
+		if (defined('c_SysLog_Enabled') and c_SysLog_Enabled) {
+			$logTypeEnabled = true;
+			if (isset($SysLog_LogTypes) and array_key_exists($LogLevel, $SysLog_LogTypes) and $SysLog_LogTypes[$LogLevel]==false) {
+				$logTypeEnabled = false;
+			}
+			if ($logTypeEnabled) {
+
+				// Sample Message
+				//<14>May 19 20:15:42 sbs2008.wps-computer.local IP-Symcon: ID 34690::SENDER Execute: My third PHP syslog message
+
+				$severityList = array(2 /*Critical*/, 3 /*Error*/, 4 /*Warning*/, 5 /*Notice*/, 6 /*Info*/, 7 /*Debug*/, 7 /*Debug*/, 7 /*Debug*/, 7 /*Debug*/);
+				$severity = $severityList[$LogLevel];
+				$facility = 1;
+				$priority    = "<".($facility*8 + $severity).">";
+
+				$timestamp     = date("M j H:i:s");
+				$host = '';
+				if (isset($_ENV["COMPUTERNAME"])) $host=$_ENV["COMPUTERNAME"];
+				$message = substr($priority.$timestamp.' '.$host.' IP-Symcon-'.$Context.': '.$Msg, 0, 1024);
+				
+				if (c_SysLog_Instance != '') {
+					CSCK_SendText((int)c_SysLog_Instance, $message);
+				} else if (c_SysLog_Host != '') {
+					$handle = fsockopen("udp://".c_SysLog_Host, c_SysLog_Port, $errno, $errstr);
+					if ($handle) {
+						fwrite($handle, $message);
+						fclose($handle);
+					}
+				} else {
+					echo $message.PHP_EOL;
+				}
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutEMail($LogLevel, $LogType, $Context, $Msg, $Priority) {
 			$Out  =    'IPS-'.IPSLogger_LogTypeShort($LogType).'-'.substr($Context,0,c_Format_LogOutContextLen);
 			$Out .=    '  '.date(c_Format_LogOutDate).substr(microtime(),1,c_Format_LogOutMicroLen);
@@ -264,7 +301,102 @@
 			}
 			SetValue($HtmlId, $TablePrefix.$MsgList.$Out.'</table>');
 	}
-    
+
+	function IPSLogger_OutMySQL($LogLevel, $LogType, $Context, $Msg)
+	{
+		$logTypeEnabled = false;
+		if (defined('c_DB_MySQL_Enabled') and c_DB_MySQL_Enabled) {
+			$logTypeEnabled = true;
+			if (isset($DB_MySQL_LogTypes) and array_key_exists($LogLevel, $DB_MySQL_LogTypes) and $DB_MySQL_LogTypes[$LogLevel]==false) {
+				$logTypeEnabled = false;
+			}
+		}
+		if (!$logTypeEnabled) return;
+
+		if (!defined("c_DB_MySQL_Server")) return;
+		if (!defined("c_DB_MySQL_Port")) return;
+		if (!defined("c_DB_MySQL_Database")) return;
+		if (!defined("c_DB_MySQL_Table")) return;
+		if (!defined("c_DB_MySQL_User")) return;
+		if (!defined("c_DB_MySQL_Password")) return;
+
+		// Testen ob Verbindung moeglich
+		ini_set('mysql.connect_timeout','10');
+		$server = @mysql_connect(c_DB_MySQL_Server.":".c_DB_MySQL_Port,c_DB_MySQL_User,c_DB_MySQL_Password);
+		if ( !$server )
+		{
+			IPS_Logmessage(__FILE__,"MySQL-Server nicht bereit");
+			return false;
+		}
+
+		// Datenbank anlegen wenn nicht vorhanden
+		$db_exist = @mysql_select_db(c_DB_MySQL_Database, $server);
+		if (!$db_exist)
+		{
+			IPS_Logmessage(__FILE__,"MySQL-Datenbank wird angelegt");
+			$mysqlstring = 'CREATE DATABASE ' . c_DB_MySQL_Database .";";
+			$db_exist = mysql_query($mysqlstring);
+		}
+		if ( !$db_exist )
+		{
+			IPS_Logmessage(__FILE__,"MySQL-Datenbank nicht bereit");
+			return false;
+		}
+
+	// Tabelle erstellen wenn nicht vorhanden
+		$result = mysql_query("SHOW TABLES LIKE '".c_DB_MySQL_Table."'");
+		if (@mysql_num_rows($result) == 0)
+		{
+			IPS_Logmessage(__FILE__,"MySQL-Tabelle nicht vorhanden wird erstellt");
+			$sql = "CREATE TABLE `" . c_DB_MySQL_Table . "` ";
+			$sql = $sql . "( `ID` INT( 10 ) NOT NULL AUTO_INCREMENT PRIMARY KEY , ";
+			$sql = $sql . "`TIMESTAMP` TIMESTAMP NOT NULL ,";
+			$sql = $sql . "`LOGLEVEL` INT ,";
+			$sql = $sql . "`LOGTYPE` VARCHAR( 150 ) ,";
+			$sql = $sql . "`CONTEXT` VARCHAR( 150 ),";
+			$sql = $sql . "`MESSAGE` VARCHAR( 1024 ), ";
+			$sql = $sql . "INDEX (LOGLEVEL), ";
+			$sql = $sql . "INDEX (LOGTYPE), ";
+			$sql = $sql . "INDEX (CONTEXT), ";
+			$sql = $sql . "INDEX (MESSAGE) ";
+			$sql = $sql . " ) ENGINE = MYISAM ;";
+
+			$tab_exist = mysql_query($sql);
+		}
+		else
+			$tab_exist = true;
+
+		if ( !$tab_exist )
+		{
+			IPS_Logmessage(__FILE__,"MySQL-Tabelle Fehler bei Tabellenerstellung");
+			return;
+		}
+
+    $Context = str_replace("'",'"',$Context);
+    $Context = str_replace("\\","\\\\",$Context);
+    $Msg = str_replace("'",'"',$Msg);
+    $Msg = str_replace("\\",'\\\\',$Msg);
+
+	  $Context = substr($Context,0,150);
+	  $Msg = substr($Msg,0,1024);
+
+		// Meldung eintragen
+		$sql = "";
+		$sql = $sql . "INSERT INTO ".c_DB_MySQL_Table." ";
+		$sql = $sql . "(`LOGLEVEL`,`LOGTYPE`,`CONTEXT`,`MESSAGE`) ";
+		$sql = $sql . "VALUES ('".$LogLevel."','".$LogType."','".$Context."','".$Msg."'); ";
+
+		@mysql_query($sql);
+		if ( mysql_error($server) )
+		{
+			$error = mysql_errno($server) . ": " . mysql_error($server) . "\n";
+			IPS_LogMessage(__FILE__,"MySQL Fehler :". $error);
+		}
+
+		mysql_close($server);
+
+	}
+	
     $IPSLogger_contextLoggingLevel = array();
     
     function IPSLogger_SetContextLoggingLevel($Context, $LogLevel) {
@@ -366,5 +498,6 @@
         }
         return $Context;
     }
-   /** @}*/
+
+	/** @}*/
 ?>
