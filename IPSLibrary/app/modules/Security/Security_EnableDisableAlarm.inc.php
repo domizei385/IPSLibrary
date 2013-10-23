@@ -17,6 +17,20 @@
 			return;
 		}
 	}
+	
+	Security_SwitchHandlerEvent($IPS_VARIABLE, $IPS_VALUE);
+	
+	function Security_SwitchHandlerEvent($sourceId, $value) {
+		Security_setAlarmMode($value);
+		
+		$event = array(
+			"type"			=> cat_SWITCHES,
+			"timestamp" 	=> time(),
+			"deviceId"		=> $sourceId,
+			"value"			=> $value
+		);
+		
+		Security_handleEvent($event);
+	}
 
-	Security_setAlarmMode($IPS_VALUE);
 ?>

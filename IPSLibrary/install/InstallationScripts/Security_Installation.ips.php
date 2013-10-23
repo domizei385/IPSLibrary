@@ -82,6 +82,7 @@
 	CreateVariable(cat_MOTION."Log", 3 /* String */, $CategoryIdData, 0, "~HTMLBox", false, false);
 	CreateVariable(cat_SMOKE."Log", 3 /* String */, $CategoryIdData, 0, "~HTMLBox", false, false);
 	CreateVariable(cat_CLOSURE."Log", 3 /* String */, $CategoryIdData, 0, "~HTMLBox", false, false);
+	CreateVariable(cat_SWITCHES."Log", 3 /* String */, $CategoryIdData, 0, "~HTMLBox", false, false);
 	
 	createCategoryAndDevices($CategoryIdData, cat_MOTION, getMotionDevices(), $ID_ScriptSecurityMotionHandler);
 	createCategoryAndDevices($CategoryIdData, cat_SMOKE, getSmokeDevices(), $ID_ScriptSecuritySmokeHandler);

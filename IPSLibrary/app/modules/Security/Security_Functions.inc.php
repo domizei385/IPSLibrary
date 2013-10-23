@@ -7,13 +7,13 @@
     define ("c_Location", "Location");
 	define ("c_Variable_ID", "VariableID");
 	define ("c_Variable_ID_Lock_Int", "LockInt");
-	define ("c_Variable_ID_Lock_Ext", "LockEx");
+	define ("c_Variable_ID_Lock_Ext", "LockExt");
 	define ("c_Variable_ID_Unlock", "Unlock");
 	
 	define ("cat_MOTION", "Motion");
 	define ("cat_SMOKE", "Smoke");
 	define ("cat_CLOSURE", "Closure");
-	define ("cat_SWITCHES", "Switches");
+	define ("cat_SWITCHES", "Switch");
 	define ("cat_ALL", "All");
 	
     define ("v_MOTION", "MOTION");
@@ -48,6 +48,27 @@
 		return $devices;
 	}
 	
+	function Security_getTypeFromSwitchId($variableId) {
+		$devices = Security_getAlarmSwitches();
+		
+		foreach($devices as $device) {
+			if(!isset($device[c_Variable_ID])) {
+				if($device[c_Variable_ID_Lock_Int] == $variableId) {
+					return c_Variable_ID_Lock_Int;
+				}
+				if($device[c_Variable_ID_Lock_Ext] == $variableId) {
+					return c_Variable_ID_Lock_Ext;
+				}
+				if($device[c_Variable_ID_Unlock] == $variableId) {
+					return c_Variable_ID_Unlock;
+				}
+			} else {
+				continue;
+			}
+		}
+		return null;
+	}
+	
     function Security_getConfigById($variableId, $type = cat_ALL) {
 		$devices = array();
 		switch ($type) {
@@ -60,17 +81,34 @@
 			case cat_CLOSURE:
 				$devices = Security_getClosureDevices();
 				break;
+			case cat_SWITCHES:
+				$devices = Security_getAlarmSwitches();
+				break;
 			case cat_ALL:
 				$devices = Security_getSmokeDevices();
 				$devices = array_merge($devices, Security_getMotionDevices());
 				$devices = array_merge($devices, Security_getClosureDevices());
+				$devices = array_merge($devices, Security_getAlarmSwitches());
 				break;
 			default:
 				throw new Exception("Unsupported event type '".$type."'");
 		}
 		
 		foreach($devices as $device) {
-			if($device[c_Variable_ID] == $variableId) {
+			if(!isset($device[c_Variable_ID])) {
+				if($device[c_Variable_ID_Lock_Int] == $variableId) {
+					$device[c_Variable_ID] = $variableId;
+					return $device;
+				}
+				if($device[c_Variable_ID_Lock_Ext] == $variableId) {
+					$device[c_Variable_ID] = $variableId;
+					return $device;
+				}
+				if($device[c_Variable_ID_Unlock] == $variableId) {
+					$device[c_Variable_ID] = $variableId;
+					return $device;
+				}
+			} else if($device[c_Variable_ID] == $variableId) {
 				return $device;
 			}
 		}
@@ -90,12 +128,16 @@
 		
 		IPSLogger_Trc(__file__, $type."Event - Source: ".$event["device"][c_Name]."@".$event["device"][c_Location]."(".$event["device"][c_Variable_ID]."/".$value.")");
 		
+		if($event["type"] == cat_SWITCHES) {
+			Security_logEvent($event);
+			return;
+		}
+		
 		// <test>
 		$variableOverrides[$event["device"][c_Variable_ID]] = $value;
 		$result = Security_evaluateAlarmCondition($variableOverrides);
 		$raiseAlarm = $result[0];
 		$log = $result[1];
-		//IPSLogger_Dbg(__file__, $log);
 		
 		Security_logEvent($event);
 		
@@ -122,14 +164,24 @@
 		$formattedDate = date("Y-m-d H:i:s", $event["timestamp"]);
 		
 		// update device motion log with plain time stamp
-		$dataPath = "Program.IPSLibrary.data.modules.Security.".$type.".".$device[c_Variable_ID];
+		$dataPath = "Program.IPSLibrary.data.modules.Security.".$type.".";
+		if($event["type"] == cat_SWITCHES) {
+			$dataPath .= $device[c_Name];
+		} else {
+			$dataPath .= $device[c_Variable_ID];
+		}
+		
 		$idDeviceData = get_ObjectIDByPath($dataPath);
 		
 		if($type == cat_CLOSURE) {
 			$appendDeviceLog = " (" . ($event["value"] ? getLang("OPENED") : getLang("CLOSED")) .")";
 		} else $appendDeviceLog = "";
 		
-		$lastEventId = IPS_GetVariableIDByName("Last".$type, $idDeviceData);
+		if($event["type"] == cat_SWITCHES) {
+			$lastEventId = IPS_GetVariableIDByName("Last".Security_getTypeFromSwitchId($device[c_Variable_ID]), $idDeviceData);
+		} else {
+			$lastEventId = IPS_GetVariableIDByName("Last".$type, $idDeviceData);
+		}
 		
 		$oldValue = substr(GetValueString($lastEventId), 0, v_LOG_LENGTH_LIMIT);
 		SetValueString($lastEventId, $formattedDate.$appendDeviceLog."<br>".$oldValue);
@@ -177,6 +229,8 @@
 			$lang = getLang("ALARM_".$type.($event["value"] ? "_OPEN" : "_CLOSE")."_DETECTED_BODY");
 		} else if($type == cat_MOTION) {
 			$lang = getLang("ALARM_".$type.($event["value"] ? "_START" : "_STOP")."_DETECTED_BODY");
+		} else if($type == cat_SWITCHES) {
+			$lang = getLang("SWITCH_".Security_getTypeFromSwitchId($event['device'][c_Variable_ID])."_BODY");
 		} else {
 			$lang = getLang("ALARM_".$type."_DETECTED_BODY");
 		}

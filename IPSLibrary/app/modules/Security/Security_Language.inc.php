@@ -23,6 +23,10 @@
 		$langString["ALARM_CLOSURE_CLOSE_DETECTED_BODY"] = "%s: Schlieﬂung von '%s' am Ort '%s' erkannt.";
 		$langString["ALARM_CLOSURE_DETECTED_BODY_HISTORY"] = $langString["ALARM_CLOSURE_DETECTED_BODY"].$langString["ALARM_DETECTED_MAIL_SUFFIX"];
 		
+		$langString["SWITCH_UNLOCK_BODY"] = "Alarm deaktiviert";
+		$langString["SWITCH_LOCKINT_BODY"] = "Alarm (intern) aktiviert";
+		$langString["SWITCH_LOCKEXT_BODY"] = "Alarm (extern) aktiviert";
+		
 		if(isset($langString[$langId])) {
 			return $langString[$langId];
 		}
