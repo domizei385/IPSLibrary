@@ -6,10 +6,14 @@
 	define ("c_Name", "Name");
     define ("c_Location", "Location");
 	define ("c_Variable_ID", "VariableID");
+	define ("c_Variable_ID_Lock_Int", "LockInt");
+	define ("c_Variable_ID_Lock_Ext", "LockEx");
+	define ("c_Variable_ID_Unlock", "Unlock");
 	
 	define ("cat_MOTION", "Motion");
 	define ("cat_SMOKE", "Smoke");
 	define ("cat_CLOSURE", "Closure");
+	define ("cat_SWITCHES", "Switches");
 	define ("cat_ALL", "All");
 	
     define ("v_MOTION", "MOTION");
@@ -35,6 +39,12 @@
 	function Security_getClosureDevices() {
 		IPSUtils_Include("Security_Configuration.inc.php", "IPSLibrary::config::modules::Security");
 		$devices = getClosureDevices();
+		return $devices;
+	}
+	
+	function Security_getAlarmSwitches() {
+		IPSUtils_Include("Security_Configuration.inc.php", "IPSLibrary::config::modules::Security");
+		$devices = getAlarmSwitches();
 		return $devices;
 	}
 	
@@ -107,16 +117,22 @@
 		$type = $event["type"];
 		$device = $event["device"];
 		
+		//IPSLogger_Dbg(__file__, "Event: ".print_r($event, true));
+		
+		$formattedDate = date("Y-m-d H:i:s", $event["timestamp"]);
+		
 		// update device motion log with plain time stamp
 		$dataPath = "Program.IPSLibrary.data.modules.Security.".$type.".".$device[c_Variable_ID];
 		$idDeviceData = get_ObjectIDByPath($dataPath);
 		
-		$formattedDate = date("Y-m-d H:i:s", $event["timestamp"]);
+		if($type == cat_CLOSURE) {
+			$appendDeviceLog = " (" . ($event["value"] ? getLang("OPENED") : getLang("CLOSED")) .")";
+		} else $appendDeviceLog = "";
 		
 		$lastEventId = IPS_GetVariableIDByName("Last".$type, $idDeviceData);
 		
 		$oldValue = substr(GetValueString($lastEventId), 0, v_LOG_LENGTH_LIMIT);
-		SetValueString($lastEventId, $formattedDate."<br>".$oldValue);
+		SetValueString($lastEventId, $formattedDate.$appendDeviceLog."<br>".$oldValue);
 		
 		// update global motion log with text
 		$dataPath = "Program.IPSLibrary.data.modules.Security.".$type."Log";
@@ -124,7 +140,8 @@
 		//IPSLogger_Trc(__file__, "Event Log Id ".$idGlobalLog);
 		
 		$value = substr(GetValueString($idGlobalLog), 0, v_LOG_LENGTH_LIMIT);
-		$newValue = sprintf(getLang("ALARM_".$type."_DETECTED_BODY"), $formattedDate, $device[c_Name], $device[c_Location]);
+		
+		$newValue = sprintf(getLang_Detected($event), $formattedDate, $device[c_Name], $device[c_Location]);
 		
 		SetValueString($idGlobalLog, $newValue."<br>".$value);
 	}
@@ -154,6 +171,18 @@
 		return $value;
 	}
 	
+	function getLang_Detected($event) {
+		$type = $event["type"];
+		if($type == cat_CLOSURE) {
+			$lang = getLang("ALARM_".$type.($event["value"] ? "_OPEN" : "_CLOSE")."_DETECTED_BODY");
+		} else if($type == cat_MOTION) {
+			$lang = getLang("ALARM_".$type.($event["value"] ? "_START" : "_STOP")."_DETECTED_BODY");
+		} else {
+			$lang = getLang("ALARM_".$type."_DETECTED_BODY");
+		}
+		return $lang;
+	}	
+	
 	function Security_raiseAlarm($event, $log = "") {
 		$type = $event["type"];
 		$device = $event["device"];
@@ -169,8 +198,25 @@
 		$idDeviceData = get_ObjectIDByPath($dataPath);
 		$lastEventId = IPS_GetVariableIDByName("Last".$type, $idDeviceData);
 		$timeEntries = str_replace("<br>", "\n", GetValueString($lastEventId));
-		$message = sprintf(getLang("ALARM_".$type."_DETECTED_BODY_HISTORY"), $formattedDate, $device[c_Name], $device[c_Location], $log, $timeEntries);
+		//$langString["ALARM_CLOSURE_DETECTED_BODY"].$langString["ALARM_DETECTED_MAIL_SUFFIX"];
+		$mailSuffix = sprintf(getLang("ALARM_DETECTED_MAIL_SUFFIX"), $log, $timeEntries);
+		$msgText = sprintf(getLang_Detected($event), $formattedDate, $device[c_Name], $device[c_Location]);
+		$message = $msgText.$mailSuffix;
 		SMTP_SendMail(SMPT_MailId, getLang("ALARM_".$type."_DETECTED_HEADER"), $message);
+	}
+	
+	function Security_getSwitchTypeFromVariable($variableId) {
+		$switches = Security_getAlarmSwitches();
+		foreach($switches as $id => $config) {
+			if($config[c_Variable_ID_Unlock] && $config[c_Variable_ID_Unlock] == $variableId) {
+				return c_Variable_ID_Unlock;
+			} else if($config[c_Variable_ID_Lock_Ext] && $config[c_Variable_ID_Lock_Ext] == $variableId) {
+				return c_Variable_ID_Lock_Ext;
+			} else if($config[c_Variable_ID_Lock_Int] && $config[c_Variable_ID_Lock_Int] == $variableId) {
+				return c_Variable_ID_Lock_Int;
+			}
+		}
+		throw new Exception("No switch found for ".$variableId);
 	}
 	
 	function b2s($bool) {

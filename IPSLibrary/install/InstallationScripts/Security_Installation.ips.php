@@ -87,6 +87,25 @@
 	createCategoryAndDevices($CategoryIdData, cat_SMOKE, getSmokeDevices(), $ID_ScriptSecuritySmokeHandler);
 	createCategoryAndDevices($CategoryIdData, cat_CLOSURE, getClosureDevices(), $ID_ScriptSecurityClosureHandler);
 	
+	// configure alarm switches
+	$alarmSwitches = getAlarmSwitches();
+	$typeCategoryId = CreateCategory(cat_SWITCHES, $CategoryIdData, 50);
+	foreach($alarmSwitches as $id => $deviceConfig) {
+		$unlockId = $deviceConfig[c_Variable_ID_Unlock];
+		$lockIntId = $deviceConfig[c_Variable_ID_Lock_Int];
+		$lockExtId = $deviceConfig[c_Variable_ID_Lock_Ext];
+		
+		echo "Creating device ".$deviceConfig[c_Name]." in $typeCategoryId for ($unlockId, $lockIntId, $lockExtId) \n";
+		$CategoryIdDevice = CreateCategory($deviceConfig[c_Name], $typeCategoryId, 50);
+		CreateVariable("Last".c_Variable_ID_Unlock, 3 /*String*/, $CategoryIdDevice, 10, "~HTMLBox");
+		CreateVariable("Last".c_Variable_ID_Lock_Int, 3 /*String*/, $CategoryIdDevice, 20, "~HTMLBox");
+		CreateVariable("Last".c_Variable_ID_Lock_Ext, 3 /*String*/, $CategoryIdDevice, 30, "~HTMLBox");
+		
+		$eventId = CreateEvent($deviceConfig[c_Name].'('.$unlockId.") - On ".c_Variable_ID_Unlock, $unlockId, $ID_ScriptSecurityEnableDisableAlarm, 0);
+		$eventId = CreateEvent($deviceConfig[c_Name].'('.$lockIntId.") - On ".c_Variable_ID_Lock_Int, $lockIntId, $ID_ScriptSecurityEnableDisableAlarm, 0);
+		$eventId = CreateEvent($deviceConfig[c_Name].'('.$lockExtId.") - On ".c_Variable_ID_Lock_Ext, $lockExtId, $ID_ScriptSecurityEnableDisableAlarm, 0);
+	}
+	
 	function createCategoryAndDevices($parentCategory, $type, $devices, $handlerScriptId) {
 		$typeCategoryId = CreateCategory($type, $parentCategory, 50);
 		foreach($devices as $deviceNumber => &$deviceConfig) {
