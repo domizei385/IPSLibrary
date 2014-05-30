@@ -66,7 +66,6 @@
 			if (file_exists($sourceFile)) {
 				$fileHandler->CopyFile($sourceFile, $backupFile);
 			} else {
-				throw new IPSConfigurationException($sourceFile . "not found");
 				$this->logHandler->Debug('Backup NOT possible - Source File '.$sourceFile.' doesnt exists');
 			}
    	}
@@ -83,6 +82,9 @@
 			$fileHandler = new IPSFileHandler();
 			foreach ($sourceList as $idx=>$sourceFile) {
 				$backupFile = $backupList[$idx];
+				if(!file_exists($sourceFile)) {
+					throw new IPSConfigurationException($sourceFile . "not found");
+				}
 				$this->CreateBackupFromFile($sourceFile, $backupFile);
 			}
 		}
