@@ -20,15 +20,15 @@
     */
 	class IPSFileVersionHandler extends IPSVersionHandler {
 
-		const FILE_INSTALLED_MODULES       = 'IPSLibrary\\config\\InstalledModules.ini';
-		const FILE_AVAILABLE_MODULES       = 'IPSLibrary\\config\\AvailableModules.ini';
-		const FILE_KNOWN_MODULES           = 'IPSLibrary\\config\\KnownModules.ini';
-		const FILE_KNOWN_REPOSITORIES      = 'IPSLibrary\\config\\KnownRepositories.ini';
-		const FILE_KNOWN_USERREPOSITORIES  = 'IPSLibrary\\config\\KnownUserRepositories.ini';
-		const FILE_REPOSITORY_VERSIONS     = 'IPSLibrary\\config\\RepositoryVersions.ini';
-		const FILE_CHANGELIST              = 'IPSLibrary\\config\\ChangeList.ini';
-		const FILE_REQUIRED_MODULES        = 'IPSLibrary\\config\\RequiredModules.ini';
- 		const FILE_DOWNLOADLIST_PATH       = "IPSLibrary\\install\\DownloadListFiles\\";
+		const FILE_INSTALLED_MODULES       = 'IPSLibrary/config/InstalledModules.ini';
+		const FILE_AVAILABLE_MODULES       = 'IPSLibrary/config/AvailableModules.ini';
+		const FILE_KNOWN_MODULES           = 'IPSLibrary/config/KnownModules.ini';
+		const FILE_KNOWN_REPOSITORIES      = 'IPSLibrary/config/KnownRepositories.ini';
+		const FILE_KNOWN_USERREPOSITORIES  = 'IPSLibrary/config/KnownUserRepositories.ini';
+		const FILE_REPOSITORY_VERSIONS     = 'IPSLibrary/config/RepositoryVersions.ini';
+		const FILE_CHANGELIST              = 'IPSLibrary/config/ChangeList.ini';
+		const FILE_REQUIRED_MODULES        = 'IPSLibrary/config/RequiredModules.ini';
+ 		const FILE_DOWNLOADLIST_PATH       = "IPSLibrary/install/DownloadListFiles/";
 		const FILE_DOWNLOADLIST_SUFFIX     = '_FileList.ini';
 
 		private $fileNameAvailableModules;
@@ -98,7 +98,7 @@
 
 		private function LoadFileKnownRepositories() {
 			if (!file_exists($this->fileNameKnownRepositories)) {
-				die($this->fileNameKnownRepositories.' does NOT exists!');
+				die($this->fileNameKnownRepositories.' does NOT exist!');
 			} elseif (file_exists($this->fileNameKnownUserRepositories)) {
 				$this->knownRepositories = parse_ini_file($this->fileNameKnownUserRepositories, true);
 			} else {
@@ -164,8 +164,8 @@
 				echo 'Process Repsoitory '.$repository.PHP_EOL;
 				$fileHandler         = new IPSFileHandler();
 				$repository = IPSFileHandler::AddTrailingPathDelimiter($repository);
-				$localAvailableModuleList      = sys_get_temp_dir().'\\AvailableModules.ini';
-				$repositoryAvailableModuleList = $repository.'IPSLibrary\\config\\AvailableModules.ini';
+				$localAvailableModuleList      = sys_get_temp_dir().'/AvailableModules.ini';
+				$repositoryAvailableModuleList = $repository.'IPSLibrary/config/AvailableModules.ini';
 				$fileHandler->CopyFiles(array($repositoryAvailableModuleList), array($localAvailableModuleList));
 
 				$availableModules = parse_ini_file($localAvailableModuleList, true);
@@ -177,8 +177,8 @@
 						$moduleDescription = $moduleProperties[1];
 					}
 					
-					$localDownloadIniFile      = sys_get_temp_dir().'\\DownloadListfile.ini';
-					$repositoryDownloadIniFile = $repository.'IPSLibrary\\install\\DownloadListFiles\\'.$moduleName.'_FileList.ini';
+					$localDownloadIniFile      = sys_get_temp_dir().'/DownloadListfile.ini';
+					$repositoryDownloadIniFile = $repository.'IPSLibrary/install/DownloadListFiles/'.$moduleName.'_FileList.ini';
 					$result = $fileHandler->CopyFiles(array($repositoryDownloadIniFile), array($localDownloadIniFile), false);
 					if ($result===false) {
 						echo '   '.$moduleName.'could NOT be found in '.$repository.PHP_EOL;
