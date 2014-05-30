@@ -58,13 +58,14 @@
 		 *
 		 * @param string $moduleName Name des Modules
 		 * @param string $sourceRepository Pfad/Url zum SourceRepository, das zum Download der Module verwendet werden soll
-		 * @param string $logDirectory Vrezeichnis das zum Loggen verwendet werden soll 
+		 * @param string $logDirectory Verzeichnis das zum Loggen verwendet werden soll 
 		 * @param string $silentMode bei TRUE werden Meldungen nicht mit ECHO gelogged
 		 */
 		public function __construct($moduleName='', $sourceRepository='', $logDirectory='', $silentMode=false) {
+			global $_IPS;
 			$_IPS['ABORT_ON_ERROR'] = true;
 			$_IPS['MODULEMANAGER']  = $this;
-			echo "Setup Module manager: ".print_r($_IPS, 1).PHP_EOL;
+			echo "Setup Module manager: ".var_dump($_IPS).PHP_EOL;
 
 			if ($moduleName=='') {
 				$moduleName = 'IPSModuleManager';
