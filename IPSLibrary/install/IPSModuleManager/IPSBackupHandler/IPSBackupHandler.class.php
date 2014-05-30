@@ -66,6 +66,7 @@
 			if (file_exists($sourceFile)) {
 				$fileHandler->CopyFile($sourceFile, $backupFile);
 			} else {
+				throw new IPSConfigurationException($sourceFile . "not found");
 				$this->logHandler->Debug('Backup NOT possible - Source File '.$sourceFile.' doesnt exists');
 			}
    	}
