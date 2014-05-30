@@ -544,6 +544,7 @@
 							die('Unknown fileTypeSection '.$fileTypeSection);
 					}
 					$fullScriptName   = str_replace('::', '/', $fullScriptName);
+					$fullScriptName   = str_replace('//', '/', $fullScriptName);
 					$fullScriptName   = str_replace('\\\\', '\\', $fullScriptName);
 					$fullScriptName   = str_replace('\\192.168', '\\\\192.168', $fullScriptName);
 
