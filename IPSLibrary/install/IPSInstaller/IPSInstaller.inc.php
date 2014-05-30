@@ -645,9 +645,9 @@
 	 */
 	function SetVariableConstant ($Name, $ID, $FileName, $Namespace='') {
 		if ($Namespace<>'') {
-		   $Namespace = str_replace('::','\\',$Namespace).'\\';
+		   $Namespace = str_replace('::','/',$Namespace).'/';
 		}
-		$FileNameFull = IPS_GetKernelDir().'scripts\\'.$Namespace.$FileName;
+		$FileNameFull = IPS_GetKernelDir().'scripts/'.$Namespace.$FileName;
 		if (!file_exists($FileNameFull)) {
 			throw new Exception($FileNameFull.' could NOT be found!', E_USER_ERROR);
 		}
@@ -898,8 +898,8 @@
 		foreach ($childrenIds as $childrenId) {
 		   $object     = IPS_GetObject($childrenId);
 		   $objectType = $object['ObjectType'];
-		   if ($objectType==1 /*Instance*/) {
-		      $instance= IPS_GetInstance($childrenId);
+		   if ($objectType == 1 /*Instance*/) {
+		      $instance = IPS_GetInstance($childrenId);
 		      if ($instance['ModuleInfo']['ModuleID'] == '{3565B1F2-8F7B-4311-A4B6-1BF1D868F39E}') {
 		         $wfcId = $childrenId;
 		         return $wfcId;
