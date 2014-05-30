@@ -1,5 +1,5 @@
 <?
-	$remoteRepository = 'https://raw.githubusercontent.com/brownson/IPSLibrary/Development/';
+	$remoteRepository = 'https://raw.githubusercontent.com/domizei385/IPSLibrary/feature/linux-install/';
 	if (isset($repository)) {
 		$remoteRepository = $repository;
 	}
