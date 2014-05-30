@@ -22,7 +22,7 @@
 	}
 
 	/**
-	 * Function zum Include ander Scripte
+	 * Function zum Include anderer Scripte
 	 *
 	 * Usage:
 	 * <pre>IPSUtils_Include('IPSLogger.inc.php', 'IPSLibrary::app::core::IPSLogger');</pre>
@@ -34,7 +34,7 @@
 	   if ($namespace=="") {
 	      include_once $file;
 	   } else {
-	      $file = IPS_GetKernelDir().'\\scripts\\'.str_replace('::','\\',$namespace).'\\'.$file;
+	      $file = IPS_GetKernelDir().'/scripts/'.str_replace('::','/',$namespace).'/'.$file;
 
 	      if (!file_exists($file)) {
 				throw new Exception('script '.$file.' could NOT be found!', E_USER_ERROR);

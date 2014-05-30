@@ -456,8 +456,8 @@
 		$ScriptId = @IPS_GetObjectIDByIdent(Get_IdentByName($Name), $ParentId);
 		if ($ScriptId === false) $ScriptId = @IPS_GetScriptIDByName($Name, $ParentId);
 		if ($ScriptId === false) {
-			$File = str_replace(IPS_GetKernelDir().'scripts\\', '', $File);
-			if (!file_exists(IPS_GetKernelDir().'scripts\\'.$File)) {
+			$File = str_replace(IPS_GetKernelDir().'scripts/', '', $File);
+			if (!file_exists(IPS_GetKernelDir().'scripts/'.$File)) {
 				Error ("Script File $File could NOT be found !!!");
 			}
 			$ScriptId = IPS_CreateScript(0);
@@ -465,7 +465,7 @@
 			IPS_SetName($ScriptId, $Name);
 			IPS_SetPosition($ScriptId, $Position);
  			IPS_SetScriptFile($ScriptId, $File);
-			$oldScriptFile=IPS_GetKernelDir().'scripts\\'.$ScriptId.'.ips.php';
+			$oldScriptFile=IPS_GetKernelDir().'scripts/'.$ScriptId.'.ips.php';
 			if (file_exists($oldScriptFile)) {
 				unlink($oldScriptFile);
 			}
