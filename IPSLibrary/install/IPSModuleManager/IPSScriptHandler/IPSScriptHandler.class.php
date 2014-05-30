@@ -48,7 +48,6 @@
 			$scriptPath = pathinfo($file, PATHINFO_DIRNAME);
 			$scriptPath = str_replace(IPS_GetKernelDir().'scripts/', '', $scriptPath);
 			$scriptPath = str_replace('\\', '.', $scriptPath);
-			$scriptPath = str_replace('//', '.', $scriptPath);
 			$scriptPath = str_replace('/', '.', $scriptPath);
 			if ($this->libraryBasePath<>'') {
 				$scriptPath = $this->libraryBasePath.'.'.$scriptPath;

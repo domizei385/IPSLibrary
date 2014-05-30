@@ -43,7 +43,6 @@
 	// -------------------------------------------------------------------------------
 	function LoadFile($sourceFile, $destinationFile) {
 		$sourceFile = str_replace('\\','/',$sourceFile);
-		$sourceFile = str_replace('//','/',$sourceFile);
 		if (strpos($sourceFile, 'https')===0) {
 			echo 'Load File '.$sourceFile."\n";
 			$curl_handle=curl_init();
@@ -67,7 +66,6 @@
 		}
 
 		$destinationFile = str_replace('\\','/',$destinationFile);
-		$destinationFile = str_replace('//','/',$destinationFile);
 		$destinationFilePath = pathinfo($destinationFile, PATHINFO_DIRNAME);
 		if (!file_exists($destinationFilePath)) {
 			if (!mkdir($destinationFilePath, 0, true)) {
