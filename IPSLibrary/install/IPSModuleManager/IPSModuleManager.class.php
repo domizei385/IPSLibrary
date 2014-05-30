@@ -63,6 +63,7 @@
 		 */
 		public function __construct($moduleName='', $sourceRepository='', $logDirectory='', $silentMode=false) {
 			$_IPS['ABORT_ON_ERROR'] = true;
+			echo "Settings Module manager";
 			$_IPS['MODULEMANAGER']  = $this;
 
 			if ($moduleName=='') {

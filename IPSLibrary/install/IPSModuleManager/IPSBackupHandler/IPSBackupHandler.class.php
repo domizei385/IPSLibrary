@@ -79,7 +79,6 @@
 		 * @param string $backupList Liste der Ziel Dateien
 		 */
 		public function CreateBackup($sourceList, $backupList) {
-		print_r($sourceList);
 			$fileHandler = new IPSFileHandler();
 			foreach ($sourceList as $idx=>$sourceFile) {
 				$backupFile = $backupList[$idx];
