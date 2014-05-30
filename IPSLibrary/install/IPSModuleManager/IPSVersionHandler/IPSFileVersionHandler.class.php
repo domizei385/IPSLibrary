@@ -52,15 +52,15 @@
 				die("ModuleName must have a Value!");
 			}
 			parent::__construct($moduleName);
-			$this->fileNameInstalledModules      = IPS_GetKernelDir().'scripts\\'.$this::FILE_INSTALLED_MODULES;
-			$this->fileNameAvailableModules      = IPS_GetKernelDir().'scripts\\'.$this::FILE_AVAILABLE_MODULES;
-			$this->fileNameKnownModules          = IPS_GetKernelDir().'scripts\\'.$this::FILE_KNOWN_MODULES;
-			$this->fileNameKnownRepositories     = IPS_GetKernelDir().'scripts\\'.$this::FILE_KNOWN_REPOSITORIES;
-			$this->fileNameKnownUserRepositories = IPS_GetKernelDir().'scripts\\'.$this::FILE_KNOWN_USERREPOSITORIES;
-			$this->fileNameRepositoryVersions    = IPS_GetKernelDir().'scripts\\'.$this::FILE_REPOSITORY_VERSIONS;
-			$this->fileNameChangeList            = IPS_GetKernelDir().'scripts\\'.$this::FILE_CHANGELIST;
-			$this->fileNameRequiredModules       = IPS_GetKernelDir().'scripts\\'.$this::FILE_REQUIRED_MODULES;
-			$this->fileNameDownloadList          = IPS_GetKernelDir().'scripts\\'.$this::FILE_DOWNLOADLIST_PATH.$moduleName.$this::FILE_DOWNLOADLIST_SUFFIX;
+			$this->fileNameInstalledModules      = IPS_GetKernelDir().'scripts/'.$this::FILE_INSTALLED_MODULES;
+			$this->fileNameAvailableModules      = IPS_GetKernelDir().'scripts/'.$this::FILE_AVAILABLE_MODULES;
+			$this->fileNameKnownModules          = IPS_GetKernelDir().'scripts/'.$this::FILE_KNOWN_MODULES;
+			$this->fileNameKnownRepositories     = IPS_GetKernelDir().'scripts/'.$this::FILE_KNOWN_REPOSITORIES;
+			$this->fileNameKnownUserRepositories = IPS_GetKernelDir().'scripts/'.$this::FILE_KNOWN_USERREPOSITORIES;
+			$this->fileNameRepositoryVersions    = IPS_GetKernelDir().'scripts/'.$this::FILE_REPOSITORY_VERSIONS;
+			$this->fileNameChangeList            = IPS_GetKernelDir().'scripts/'.$this::FILE_CHANGELIST;
+			$this->fileNameRequiredModules       = IPS_GetKernelDir().'scripts/'.$this::FILE_REQUIRED_MODULES;
+			$this->fileNameDownloadList          = IPS_GetKernelDir().'scripts/'.$this::FILE_DOWNLOADLIST_PATH.$moduleName.$this::FILE_DOWNLOADLIST_SUFFIX;
 
 			$this->ReloadVersionData();
 		}
@@ -98,7 +98,7 @@
 
 		private function LoadFileKnownRepositories() {
 			if (!file_exists($this->fileNameKnownRepositories)) {
-				die('KnownModules.ini does NOT exists!');
+				die($this->fileNameKnownRepositories.' does NOT exists!');
 			} elseif (file_exists($this->fileNameKnownUserRepositories)) {
 				$this->knownRepositories = parse_ini_file($this->fileNameKnownUserRepositories, true);
 			} else {
