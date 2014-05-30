@@ -3,40 +3,37 @@
 	 * @{
 	 *
  	 *
-	 * @file          IPSComponentSwitch_Homematic.class.php
+	 * @file          IPSComponentSwitch_LCNa.class.php
 	 * @author        Andreas Brauneis
 	 *
 	 *
 	 */
 
    /**
-    * @class IPSComponentSwitch_Homematic
+    * @class IPSComponentSwitch_LCNa
     *
-    * Definiert ein IPSComponentSwitch_Homematic Object, das ein IPSComponentSwitch Object für Homematic implementiert.
+    * Definiert ein IPSComponentSwitch_LCNa Object, das ein IPSComponentSwitch Object für einen LCN analog Ausgang implementiert.
     *
     * @author Andreas Brauneis
     * @version
-    * Version 2.50.1, 31.01.2012<br/>
+    * Version 2.50.1, 28.12.2013<br/>
     */
 
 	IPSUtils_Include ('IPSComponentSwitch.class.php', 'IPSLibrary::app::core::IPSComponent::IPSComponentSwitch');
 
-	class IPSComponentSwitch_Homematic extends IPSComponentSwitch {
+	class IPSComponentSwitch_LCNa extends IPSComponentSwitch {
 
 		private $instanceId;
-		private $supportsOnTime;
 	
 		/**
 		 * @public
 		 *
-		 * Initialisierung eines IPSComponentSwitch_Homematic Objektes
+		 * Initialisierung eines IPSComponentSwitch_LCNa Objektes
 		 *
-		 * @param integer $instanceId InstanceId des Homematic Devices
-		 * @param integer $supportsOnTime spezifiziert ob das Homematic Device eine ONTIME unterstützt
+		 * @param integer $instanceId InstanceId des LCN Devices
 		 */
-		public function __construct($instanceId, $supportsOnTime=true) {
-			$this->instanceId     = IPSUtil_ObjectIDByPath($instanceId);
-			$this->supportsOnTime = $supportsOnTime;
+		public function __construct($instanceId) {
+			$this->instanceId = IPSUtil_ObjectIDByPath($instanceId);
 		}
 
 		/**
@@ -49,8 +46,11 @@
 		 * @param string $value Wert der Variable
 		 * @param IPSModuleSwitch $module Module Object an das das aufgetretene Event weitergeleitet werden soll
 		 */
-		public function HandleEvent($variable, $value, IPSModuleSwitch $module){
-			$module->SyncState($value, $this);
+		public function HandleEvent($variable, $value, IPSModuleSwitch $module) {
+			if ($value > 0)
+				$module->SyncState(true, $this);
+			else
+				$module->SyncState(false, $this);
 		}
 
 		/**
@@ -72,13 +72,13 @@
 		 * Zustand Setzen 
 		 *
 		 * @param boolean $value Wert für Schalter
-		 * @param integer $onTime Zeit in Sekunden nach der der Aktor automatisch ausschalten soll
+		 * @param integer $onTime Zeit in Sekunden nach der der Aktor automatisch ausschalten soll (nicht unterstützt)
 		 */
 		public function SetState($value, $onTime=false) {
-			if ($onTime!==false and $value and $this->supportsOnTime===true) 
-				HM_WriteValueFloat($this->instanceId, "ON_TIME", $onTime);  
-			
-			HM_WriteValueBoolean($this->instanceId, "STATE", $value);
+			if ($value)
+				LCN_SetIntensity($this->instanceId, 100, 0.2);
+			else
+				LCN_SetIntensity($this->instanceId, 0, 0.2);
 		}
 
 		/**
@@ -89,7 +89,7 @@
 		 * @return boolean aktueller Schaltzustand  
 		 */
 		public function GetState() {
-			GetValue(IPS_GetVariableIDByIdent('STATE', $this->instanceId));
+			GetValue(IPS_GetVariableIDByName('Intensity', $this->instanceId));
 		}
 
 	}

@@ -3,16 +3,16 @@
 	 * @{
 	 *
  	 *
-	 * @file          IPSComponentSwitch_Homematic.class.php
+	 * @file          IPSComponentSwitch_Enocean.class.php
 	 * @author        Andreas Brauneis
 	 *
 	 *
 	 */
 
    /**
-    * @class IPSComponentSwitch_Homematic
+    * @class IPSComponentSwitch_Enocean
     *
-    * Definiert ein IPSComponentSwitch_Homematic Object, das ein IPSComponentSwitch Object für Homematic implementiert.
+    * Definiert ein IPSComponentSwitch_Enocean Object, das ein IPSComponentSwitch Object für Homematic implementiert.
     *
     * @author Andreas Brauneis
     * @version
@@ -21,28 +21,25 @@
 
 	IPSUtils_Include ('IPSComponentSwitch.class.php', 'IPSLibrary::app::core::IPSComponent::IPSComponentSwitch');
 
-	class IPSComponentSwitch_Homematic extends IPSComponentSwitch {
+	class IPSComponentSwitch_Enocean extends IPSComponentSwitch {
 
 		private $instanceId;
-		private $supportsOnTime;
-	
+
 		/**
 		 * @public
 		 *
-		 * Initialisierung eines IPSComponentSwitch_Homematic Objektes
+		 * Initialisierung eines IPSComponentSwitch_Enocean Objektes
 		 *
 		 * @param integer $instanceId InstanceId des Homematic Devices
-		 * @param integer $supportsOnTime spezifiziert ob das Homematic Device eine ONTIME unterstützt
 		 */
-		public function __construct($instanceId, $supportsOnTime=true) {
-			$this->instanceId     = IPSUtil_ObjectIDByPath($instanceId);
-			$this->supportsOnTime = $supportsOnTime;
+		public function __construct($instanceId) {
+			$this->instanceId = IPSUtil_ObjectIDByPath($instanceId);
 		}
 
 		/**
 		 * @public
 		 *
-		 * Function um Events zu behandeln, diese Funktion wird vom IPSMessageHandler aufgerufen, um ein aufgetretenes Event 
+		 * Function um Events zu behandeln, diese Funktion wird vom IPSMessageHandler aufgerufen, um ein aufgetretenes Event
 		 * an das entsprechende Module zu leiten.
 		 *
 		 * @param integer $variable ID der auslösenden Variable
@@ -69,16 +66,13 @@
 		/**
 		 * @public
 		 *
-		 * Zustand Setzen 
+		 * Zustand Setzen
 		 *
 		 * @param boolean $value Wert für Schalter
 		 * @param integer $onTime Zeit in Sekunden nach der der Aktor automatisch ausschalten soll
 		 */
 		public function SetState($value, $onTime=false) {
-			if ($onTime!==false and $value and $this->supportsOnTime===true) 
-				HM_WriteValueFloat($this->instanceId, "ON_TIME", $onTime);  
-			
-			HM_WriteValueBoolean($this->instanceId, "STATE", $value);
+			ENO_SwitchMode($this->instanceId, $value);
 		}
 
 		/**
@@ -86,7 +80,7 @@
 		 *
 		 * Liefert aktuellen Zustand
 		 *
-		 * @return boolean aktueller Schaltzustand  
+		 * @return boolean aktueller Schaltzustand
 		 */
 		public function GetState() {
 			GetValue(IPS_GetVariableIDByIdent('STATE', $this->instanceId));
