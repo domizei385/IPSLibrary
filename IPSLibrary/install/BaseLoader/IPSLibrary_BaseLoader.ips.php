@@ -96,7 +96,7 @@
 
 		if ($pos === false) {
 			echo 'Register IPSUtils.inc.php in File __autoload.php';
-			$includeCommand = '    include_once IPS_GetKernelDir()."/scripts/IPSLibrary/app/core/IPSUtils/IPSUtils.inc.php";';
+			$includeCommand = '    include_once IPS_GetKernelDir()."scripts/IPSLibrary/app/core/IPSUtils/IPSUtils.inc.php";';
 			$FileContent = str_replace('?>', $includeCommand.PHP_EOL.'?>', $FileContent);
 			file_put_contents($file, $FileContent);
 		}
