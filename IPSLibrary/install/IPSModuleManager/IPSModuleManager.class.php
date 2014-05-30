@@ -513,6 +513,7 @@
 					continue;
 				}
 				$script = str_replace('\\', '/', $script);
+				$script = str_replace('//', '/', $script);
 				
 				if ($fileKey=='DefaultFiles') {
 					$script   = 'Default/'.$script;
