@@ -31,13 +31,13 @@
 	 */
 	class IPSModuleManager{
 
- 		const DOWNLOADLISTFILE_PATH            = "IPSLibrary\\install\\DownloadListFiles\\";
+ 		const DOWNLOADLISTFILE_PATH            = "IPSLibrary/install/DownloadListFiles/";
 		const DOWNLOADLISTFILE_SUFFIX          = '_FileList.ini';
- 		const INSTALLATIONSCRIPT_PATH          = "IPSLibrary\\install\\InstallationScripts\\";
+ 		const INSTALLATIONSCRIPT_PATH          = "IPSLibrary/install/InstallationScripts/";
 		const INSTALLATIONSCRIPT_SUFFIX        = '_Installation.ips.php';
 		const DEINSTALLATIONSCRIPT_SUFFIX      = '_Deinstallation.ips.php';
-		const INITIALIZATIONFILE_PATH          = "IPSLibrary\\install\\InitializationFiles\\";
-		const INITIALIZATIONDEFAULTFILE_PATH   = "IPSLibrary\\install\\InitializationFiles\\Default\\";
+		const INITIALIZATIONFILE_PATH          = "IPSLibrary/install/InitializationFiles/";
+		const INITIALIZATIONDEFAULTFILE_PATH   = "IPSLibrary/install/InitializationFiles/Default/";
 		const INITIALIZATIONFILE_SUFFIX        = '.ini';
 
 		private $moduleName="";
@@ -81,7 +81,7 @@
 
 			// Create Log Handler
 			if ($logDirectory=='') {
-				$logDirectory = $this->managerConfigHandler->GetValueDef(IPSConfigHandler::LOGDIRECTORY, '', IPS_GetKernelDir().'logs\\');
+				$logDirectory = $this->managerConfigHandler->GetValueDef(IPSConfigHandler::LOGDIRECTORY, '', IPS_GetKernelDir().'logs/');
 			}
 			$this->logHandler = new IPSLogHandler(get_class($this), $logDirectory, $moduleName, true, $silentMode);
 		   
@@ -96,22 +96,22 @@
 			$this->fileHandler         = new IPSFileHandler();
 
 			// Create Backup Handler
-			$backupDirectory           = $this->managerConfigHandler->GetValueDef('BackupLoadDirectory', '', IPS_GetKernelDir().'backup\\IPSLibrary_Load\\');
+			$backupDirectory           = $this->managerConfigHandler->GetValueDef('BackupLoadDirectory', '', IPS_GetKernelDir().'backup/IPSLibrary_Load/');
 			$this->backupHandler       = new IPSBackupHandler($backupDirectory);
 
 			// ConfigHandler for Module Filelist File
-			$localDownloadIniFile      = $this->GetModuleDownloadListFile(IPS_GetKernelDir().'scripts\\');
+			$localDownloadIniFile      = $this->GetModuleDownloadListFile(IPS_GetKernelDir().'scripts/');
 			if (!file_exists($localDownloadIniFile)) {
 				$repositoryDownloadIniFile = $this->GetModuleDownloadListFile($this->sourceRepository);
 				$this->logHandler->Log('Module Download Ini File doesnt exists -> Load Ini File "'.$repositoryDownloadIniFile.'"');
 				$this->fileHandler->LoadFiles(array($repositoryDownloadIniFile), array($localDownloadIniFile));
 			}
-			$this->fileConfigHandler = new IPSIniConfigHandler($this->GetModuleDownloadListFile(IPS_GetKernelDir().'scripts\\'));
+			$this->fileConfigHandler = new IPSIniConfigHandler($this->GetModuleDownloadListFile(IPS_GetKernelDir().'scripts/'));
 
 			// ConfigHandler for Module INI File
 			$moduleIniFile = $this->GetModuleInitializationFile($moduleName);
 			if (!file_exists($moduleIniFile)) {
-				$moduleLocalDefaultIniFile      = $this->GetModuleDefaultInitializationFile($moduleName, IPS_GetKernelDir().'scripts\\');
+				$moduleLocalDefaultIniFile      = $this->GetModuleDefaultInitializationFile($moduleName, IPS_GetKernelDir().'scripts/');
 				$moduleRepositoryDefaultIniFile = $this->GetModuleDefaultInitializationFile($moduleName, $this->sourceRepository);
 				$this->logHandler->Log('Module Ini File doesnt exists -> Load Default Ini File "'.$moduleLocalDefaultIniFile.'"');
 				$this->fileHandler->LoadFiles(array($moduleRepositoryDefaultIniFile), array($moduleLocalDefaultIniFile));
@@ -389,7 +389,7 @@
 		 * @return integer ID des Objectes
 		 */
 		public function GetConfigurationObjectID() {
-			$configList       = $this->GetScriptList('DefaultFiles', 'Config', IPS_GetKernelDir().'scripts\\');
+			$configList       = $this->GetScriptList('DefaultFiles', 'Config', IPS_GetKernelDir().'scripts/');
 			if (count($configList)==0) {
 			   return false;
 			}
@@ -436,7 +436,7 @@
 		 * @return string liefert Installation Filename des Modules
 		 */
 		private function GetModuleInstallationScript() {
-			$path = IPS_GetKernelDir().'scripts\\'.$this::INSTALLATIONSCRIPT_PATH;
+			$path = IPS_GetKernelDir().'scripts/'.$this::INSTALLATIONSCRIPT_PATH;
 			$file = $this->moduleName.$this::INSTALLATIONSCRIPT_SUFFIX;
 			return $path.$file;
 		}
@@ -447,7 +447,7 @@
 		 * @return string liefert Installation Filename des Modules
 		 */
 		private function GetModuleDeinstallationScript() {
-			$path = IPS_GetKernelDir().'scripts\\'.$this::INSTALLATIONSCRIPT_PATH;
+			$path = IPS_GetKernelDir().'scripts/'.$this::INSTALLATIONSCRIPT_PATH;
 			$file = $this->moduleName.$this::DEINSTALLATIONSCRIPT_SUFFIX;
 			return $path.$file;
 		}
@@ -471,7 +471,7 @@
 		 * @return string liefert Initialization Filename des Modules
 		 */
 		private function GetModuleInitializationFile($moduleName) {
-			$path = IPS_GetKernelDir().'scripts\\'.$this::INITIALIZATIONFILE_PATH;
+			$path = IPS_GetKernelDir().'scripts/'.$this::INITIALIZATIONFILE_PATH;
 			$file = $moduleName.$this::INITIALIZATIONFILE_SUFFIX;
 			return $path.$file;
 		}
@@ -510,9 +510,9 @@
 			foreach ($scriptList as $idx=>$script) {
 				if ($script<>'') {
 					if ($fileKey=='DefaultFiles') {
-						$script   = 'Default\\'.$script;
+						$script   = 'Default/'.$script;
 					} elseif ($fileKey=='ExampleFiles') {
-						$script   = 'Examples\\'.$script;
+						$script   = 'Examples/'.$script;
 					} else {
 					}
 
@@ -527,23 +527,23 @@
 							$fullScriptName   = $baseDirectory.'::'.$namespace.'::'.$script;
 							break;
 						case 'WebFront':
-							if ($baseDirectory==IPS_GetKernelDir().'scripts\\') {
-								$fullScriptName   = IPS_GetKernelDir().'webfront\\user\\'.$this->moduleName.'\\'.$script;
+							if ($baseDirectory==IPS_GetKernelDir().'scripts/') {
+								$fullScriptName   = IPS_GetKernelDir().'webfront/user/'.$this->moduleName.'/'.$script;
 							} else {
-								$fullScriptName   = $baseDirectory.'\\IPSLibrary\\webfront\\'.$this->moduleName.'\\'.$script;
+								$fullScriptName   = $baseDirectory.'/IPSLibrary/webfront/'.$this->moduleName.'/'.$script;
 							}
 							break;
 						case 'Install':
 							if ($fileKey=='DefaultFiles' or $fileKey=='ExampleFiles') {
-								$fullScriptName   = $baseDirectory.'\\IPSLibrary\\install\\InitializationFiles\\'.$script;
+								$fullScriptName   = $baseDirectory.'/IPSLibrary/install/InitializationFiles/'.$script;
 							} else {
-								$fullScriptName   = $baseDirectory.'\\IPSLibrary\\install\\InstallationScripts\\'.$script;
+								$fullScriptName   = $baseDirectory.'/IPSLibrary/install/InstallationScripts/'.$script;
 							}
 							break;
 						default:
 							die('Unknown fileTypeSection '.$fileTypeSection);
 					}
-					$fullScriptName   = str_replace('::', '\\', $fullScriptName);
+					$fullScriptName   = str_replace('::', '/', $fullScriptName);
 					$fullScriptName   = str_replace('\\\\', '\\', $fullScriptName);
 					$fullScriptName   = str_replace('\\192.168', '\\\\192.168', $fullScriptName);
 
@@ -595,7 +595,7 @@
 		 * @param boolean $overwriteUserFiles bestehende User Files mit Default überschreiben
 		 */
 		private function LoadModuleFiles($fileKey, $fileTypeSection, $sourceRepository, $overwriteUserFiles=false) {
-			$localList       = $this->GetScriptList($fileKey, $fileTypeSection, IPS_GetKernelDir().'scripts\\');
+			$localList       = $this->GetScriptList($fileKey, $fileTypeSection, IPS_GetKernelDir().'scripts/');
 			$repositoryList  = $this->GetScriptList($fileKey, $fileTypeSection, $sourceRepository);
 			$backupList      = $this->GetScriptList($fileKey, $fileTypeSection, $this->backupHandler->GetBackupDirectory());
 
@@ -623,7 +623,7 @@
 			$sourceRepository = IPSFileHandler::AddTrailingPathDelimiter($sourceRepository);
 
 			$this->LoadModuleFiles('DownloadFiles','Install',  $sourceRepository, $overwriteUserFiles);
-			$this->fileConfigHandler = new IPSIniConfigHandler($this->GetModuleDownloadListFile(IPS_GetKernelDir().'scripts\\'));
+			$this->fileConfigHandler = new IPSIniConfigHandler($this->GetModuleDownloadListFile(IPS_GetKernelDir().'scripts/'));
 
 			$newVersion = $this->fileConfigHandler->GetValueDef(IPSConfigHandler::SCRIPTVERSION, null, 
 			                                                    $this->fileConfigHandler->GetValue(IPSConfigHandler::SCRIPTVERSION));
@@ -723,10 +723,10 @@
 		 * @param string $sourceRepository Pfad/Url zum Source Repository, das zum Speichern verwendet werden soll
 		 */
 		private function DeleteModuleFiles($fileKey, $fileTypeSection) {
-			$backupDirectory = $this->managerConfigHandler->GetValueDef('DeployBackupDirectory', '', IPS_GetKernelDir().'backup\\IPSLibrary_Delete\\');
+			$backupDirectory = $this->managerConfigHandler->GetValueDef('DeployBackupDirectory', '', IPS_GetKernelDir().'backup/IPSLibrary_Delete/');
 			$backupHandler   = new IPSBackupHandler($backupDirectory);
 
-			$localList       = $this->GetScriptList($fileKey, $fileTypeSection, IPS_GetKernelDir().'scripts\\');
+			$localList       = $this->GetScriptList($fileKey, $fileTypeSection, IPS_GetKernelDir().'scripts/');
 			$backupList      = $this->GetScriptList($fileKey, $fileTypeSection, $backupHandler->GetBackupDirectory());
 
 			$this->logHandler->Log('Delete Files with Key='.$fileKey.' and Section='.$fileTypeSection);
@@ -846,10 +846,10 @@
 		 * @param string $sourceRepository Pfad/Url zum Source Repository, das zum Speichern verwendet werden soll
 		 */
 		private function DeployModuleFiles($fileKey, $fileTypeSection, $sourceRepository) {
-			$backupDirectory = $this->managerConfigHandler->GetValueDef('DeployBackupDirectory', '', IPS_GetKernelDir().'backup\\IPSLibrary_Deploy\\');
+			$backupDirectory = $this->managerConfigHandler->GetValueDef('DeployBackupDirectory', '', IPS_GetKernelDir().'backup/IPSLibrary_Deploy/');
 			$backupHandler   = new IPSBackupHandler($backupDirectory);
 
-			$localList       = $this->GetScriptList($fileKey, $fileTypeSection, IPS_GetKernelDir().'scripts\\');
+			$localList       = $this->GetScriptList($fileKey, $fileTypeSection, IPS_GetKernelDir().'scripts/');
 			$repositoryList  = $this->GetScriptList($fileKey, $fileTypeSection, $sourceRepository);
 			$backupList      = $this->GetScriptList($fileKey, $fileTypeSection, $backupHandler->GetBackupDirectory());
 

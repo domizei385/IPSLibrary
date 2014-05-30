@@ -68,7 +68,7 @@
 			$filePathDefault = pathinfo($defaultFile, PATHINFO_DIRNAME);
 				
 			$filePath = pathinfo($filePathDefault, PATHINFO_DIRNAME);
-			$file = $filePath.'\\'.$fileName;
+			$file = $filePath.'/'.$fileName;
 				
 			return $file;
 		}
@@ -273,8 +273,8 @@
 		 */
 		public function CreateFileFromExample($exampleFile, $configFile, $namespace='') {
 		   if ($namespace <> '') {
-		      $exampleFile = IPS_GetKernelDir().'\\scripts\\'.str_replace('::','\\',$namespace).'\\examples\\'.$exampleFile;
-		      $configFile  = IPS_GetKernelDir().'\\scripts\\'.str_replace('::','\\',$namespace).'\\'.$configFile;
+		      $exampleFile = IPS_GetKernelDir().'/scripts/'.str_replace('::','/',$namespace).'/examples/'.$exampleFile;
+		      $configFile  = IPS_GetKernelDir().'/scripts/'.str_replace('::','/',$namespace).'/'.$configFile;
 			}
 
 			$this->CopyFile($exampleFile, $configFile);

@@ -47,8 +47,8 @@
 		 * @param string $address IP Addresse des Sonos Players 
 		 */
 		public function __construct( $address ) {
-			if (file_exists(IPS_GetKernelDir().'scripts\\PHPSonos.inc.php')) {
-			   include_once IPS_GetKernelDir().'scripts\\PHPSonos.inc.php';
+			if (file_exists(IPS_GetKernelDir().'scripts/PHPSonos.inc.php')) {
+			   include_once IPS_GetKernelDir().'scripts/PHPSonos.inc.php';
 			} else {
 				IPSUtils_Include ('PHPSonos.class.php', 'IPSLibrary::app::hardware::Sonos');
 			}

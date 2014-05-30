@@ -20,7 +20,7 @@
 			$DebugTrace = debug_backtrace();
 			foreach ($DebugTrace as $Idx=>$Stack) {
 				if (array_key_exists('line', $Stack) and array_key_exists('function', $Stack) and array_key_exists('file', $Stack)) {
-					$File     = str_replace('scripts\\', '', str_replace(IPS_GetKernelDir(), '', $Stack['file']));
+					$File     = str_replace('scripts/', '', str_replace(IPS_GetKernelDir(), '', $Stack['file']));
 					$Function = $Stack['function'];
 					$Line     = str_pad($Stack['line'],3,' ', STR_PAD_LEFT);
 					$StackTxt  .= c_lf."  $Line in $File (call $Function)";
@@ -42,7 +42,7 @@
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_WriteFile($Directory, $File, $Text, $ID_OutEnabled) {
 		if ($Directory == "") {
-			$Directory = IPS_GetKernelDir().'logs\\';
+			$Directory = IPS_GetKernelDir().'logs/';
 		}
 		if(($FileHandle = fopen($Directory.$File, "a")) === false) {
 			SetValue($ID_OutEnabled, false);
@@ -376,9 +376,9 @@
 		}
 
     $Context = str_replace("'",'"',$Context);
-    $Context = str_replace("\\","\\\\",$Context);
+    $Context = str_replace("/","//",$Context);
     $Msg = str_replace("'",'"',$Msg);
-    $Msg = str_replace("\\",'\\\\',$Msg);
+    $Msg = str_replace("/",'//',$Msg);
 
 	  $Context = substr($Context,0,150);
 	  $Msg = substr($Msg,0,1024);
@@ -494,9 +494,9 @@
     }
     
     function IPSLogger_normalizeContext($Context) {
-        if (strrpos($Context, '\\') !== false) {
+        if (strrpos($Context, '/') !== false) {
             if (strpos($Context, '.') !== false) {
-                $Context = substr($Context, strrpos($Context, '\\')+1, strpos($Context, '.')-strrpos($Context, '\\')-1);
+                $Context = substr($Context, strrpos($Context, '/')+1, strpos($Context, '.')-strrpos($Context, '/')-1);
             }
         }
         return $Context;
