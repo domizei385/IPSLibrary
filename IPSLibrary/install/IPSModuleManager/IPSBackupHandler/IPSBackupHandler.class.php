@@ -79,12 +79,10 @@
 		 * @param string $backupList Liste der Ziel Dateien
 		 */
 		public function CreateBackup($sourceList, $backupList) {
+		print_r($sourceList);
 			$fileHandler = new IPSFileHandler();
 			foreach ($sourceList as $idx=>$sourceFile) {
 				$backupFile = $backupList[$idx];
-				if(!file_exists($sourceFile)) {
-					throw new IPSConfigurationException($sourceFile . "not found");
-				}
 				$this->CreateBackupFromFile($sourceFile, $backupFile);
 			}
 		}
