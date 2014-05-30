@@ -54,7 +54,7 @@
 			if ($namespace=="") {
 				$result = $iniFileName;
 			} else {
-				$result = IPS_GetKernelDir().'/scripts/'.str_replace('::','/',$namespace).'/'.$iniFileName;;
+				$result = IPS_GetKernelDir().'scripts/'.str_replace('::','/',$namespace).'/'.$iniFileName;;
 			}
 			$result = str_replace('\\','/',$result);
 			return $result;

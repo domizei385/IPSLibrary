@@ -465,18 +465,18 @@
 
 			// Set Media File for Common View
 			$variableIdMedia = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMPICT, $this->categoryIdCommon);
-			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/Picture/CommonDummy.jpg', false);
-			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/Picture/Common.jpg', false);
+			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/CommonDummy.jpg', false);
+			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Common.jpg', false);
 
 			// Copy Image to webfront
-			Copy (IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/Picture/Common.jpg',
-			      IPS_GetKernelDir().'/webfront/user/IPSCam/ImageCurrent.jpg');
+			Copy (IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Common.jpg',
+			      IPS_GetKernelDir().'webfront/user/IPSCam/ImageCurrent.jpg');
 
 			// Set Media File for Camera View
 			$categoryIdCam   = IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams);
 			$variableIdMedia = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMPICT, $categoryIdCam);
-			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/Picture/CurrentDummy.jpg', false);
-			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/Picture/Current.jpg', false);
+			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/CurrentDummy.jpg', false);
+			IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Current.jpg', false);
 
 			$this->RefreshDisplay($cameraIdx);
 		}
@@ -557,8 +557,8 @@
 			if ($fileName == null) {
 				$fileName = date(IPSCAM_NAV_DATEFORMATFILE);
 			}
-			$localFile        = IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/'.$directoryName.'/'.$fileName.'.jpg';
-			$localFile2       = IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/'.$directoryName.'/'.$fileName2.'.jpg';
+			$localFile        = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/'.$directoryName.'/'.$fileName.'.jpg';
+			$localFile2       = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/'.$directoryName.'/'.$fileName2.'.jpg';
 			IPSLogger_Trc(__file__, "Copy $urlPicture --> $localFile");
 
 			$curl_handle=curl_init();
@@ -635,8 +635,8 @@
 				SetValue($variableIdNavTime, date(IPSCAM_NAV_DATEFORMATDISP, $navTime));
 
 			   $variableIdMedia   = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMHIST, $this->categoryIdCommon);
-			   $mediaFileName     = IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/History/'.$navFile.'.jpg';
-			   $userFileName      = IPS_GetKernelDir().'/WebFront/User/IPSCam/ImageHistory.jpg';
+			   $mediaFileName     = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/History/'.$navFile.'.jpg';
+			   $userFileName      = IPS_GetKernelDir().'WebFront/User/IPSCam/ImageHistory.jpg';
 			   IPS_SetMediaFile($variableIdMedia, $mediaFileName, false);
 			   copy ($mediaFileName, $userFileName);
 			}
@@ -699,8 +699,8 @@
 
 			foreach ($this->config as $cameraIdx=>$data) {
 				$categoryIdCam      = IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams);
-				$directoryHist      = IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/History/';
-				$directoryMot       = IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/MotionCapture/';
+				$directoryHist      = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/History/';
+				$directoryMot       = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/MotionCapture/';
 				$daysHist           = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTHIST, $categoryIdCam));
 				$daysMot            = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTHIST, $categoryIdCam));
 				$this->PurgeFilesByDirectory($directoryHist, $daysHist);
