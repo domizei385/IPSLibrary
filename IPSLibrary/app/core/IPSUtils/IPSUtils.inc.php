@@ -31,16 +31,14 @@
 	 * @param string $namespace namespace des Files, dass inkludiert werden soll (gibt den relativen Pfad vom IPS scripts Verzeichnis an)
 	 */
 	function IPSUtils_Include($file, $namespace="") {
-	   if ($namespace=="") {
-	      include_once $file;
-	   } else {
+	   if ($namespace!=="") {
 	      $file = IPS_GetKernelDir().'scripts/'.str_replace('::','/',$namespace).'/'.$file;
-
-	      if (!file_exists($file)) {
-				throw new Exception('script '.$file.' could NOT be found!', E_USER_ERROR);
-	      }
-	      include_once $file;
 	   }
+	   if (!file_exists($file)) {
+			throw new Exception('script '.$file.' could NOT be found!', E_USER_ERROR);
+	   }
+	   echo "IPSUtils_Include of $file".PHP_EOL;
+	   include_once $file;
 	}
 
 	/** ObjektId aus Pfad ermittlen
