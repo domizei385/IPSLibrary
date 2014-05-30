@@ -866,48 +866,28 @@
 		IPS_SetVariableProfileIcon($Name, $Icon);
 	}
 
-	/** Liefert die ID des ersten gefundenen WebFront Konfigurators
-	 *
-	 * Die Funktion durchsucht den Konfigurations Baum von IP-Symcon und liefert die ID des erst besten
-	 * WebFront Konfigurators zurück.
-	 *
+	/**
+	 * Lädt alle WebFronts neu
 	 */
 	function ReloadAllWebFronts() {
-		$childrenIds = IPS_GetChildrenIDs(0);
-		foreach ($childrenIds as $childrenId) {
-		   $object     = IPS_GetObject($childrenId);
-		   $objectType = $object['ObjectType'];
-		   if ($objectType==1 /*Instance*/) {
-		      $instance= IPS_GetInstance($childrenId);
-		      if ($instance['ModuleInfo']['ModuleID'] == '{3565B1F2-8F7B-4311-A4B6-1BF1D868F39E}') {
-		         WFC_Reload($childrenId);
-		      }
-		   }
+		$wfIds = IPS_GetInstanceListByModuleID('{3565B1F2-8F7B-4311-A4B6-1BF1D868F39E}');
+		foreach ($wfIds as $wfId) {
+		    WFC_Reload($wfId);
 		}
 	}
 
-	/** Liefert die ID des ersten gefundenen WebFront Konfigurators
+	/** 
+	 * Liefert die ID des ersten gefundenen WebFront Konfigurators
 	 *
-	 * Die Funktion durchsucht den Konfigurations Baum von IP-Symcon und liefert die ID des erst besten
-	 * WebFront Konfigurators zurück.
+	 * Die Funktion gibt die ID des ersten WebFront Konfigurators zurück. Wenn keiner existiert, wird 'false' zurückgegeben.
 	 *
 	 */
 	function GetWFCIdDefault() {
-	   $wfcId=false;
-		$childrenIds = IPS_GetChildrenIDs(0);
-		foreach ($childrenIds as $childrenId) {
-		   $object     = IPS_GetObject($childrenId);
-		   $objectType = $object['ObjectType'];
-		   if ($objectType == 1 /*Instance*/) {
-		      $instance = IPS_GetInstance($childrenId);
-			  echo print_r($instance, 1);
-		      if ($instance['ModuleInfo']['ModuleID'] == '{3565B1F2-8F7B-4311-A4B6-1BF1D868F39E}') {
-		         $wfcId = $childrenId;
-		         return $wfcId;
-		      }
-		   }
+	    $wfIds = IPS_GetInstanceListByModuleID('{3565B1F2-8F7B-4311-A4B6-1BF1D868F39E}');
+		foreach ($wfIds as $wfId) {
+		    return $wfId;
 		}
-	   return $wfcId;
+		return false;
 	}
 
 	/** Existenz eines WebFront Konfigurator Items überprüfen
@@ -1088,6 +1068,7 @@
 	}
 
 	function Debug($msg) {
+		global $_IPS;
 		if (isset($_IPS['MODULEMANAGER'])) {
 			$moduleManager = $_IPS['MODULEMANAGER'];
 			$moduleManager->LogHandler()->Debug($msg);
@@ -1098,6 +1079,7 @@
 	}
 
 	function Error($msg) {
+		global $_IPS;
 		if (isset($_IPS['MODULEMANAGER'])) {
 			$moduleManager = $_IPS['MODULEMANAGER'];
 			$moduleManager->LogHandler()->Error($msg);
