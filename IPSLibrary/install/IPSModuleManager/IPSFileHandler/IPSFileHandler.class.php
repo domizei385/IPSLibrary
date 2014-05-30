@@ -131,7 +131,9 @@
 													E_USER_ERROR);
 				}
 			}
-
+			
+			$destinationFile = str_replace('\\','/', $destinationFile);
+			$destinationFile = str_replace('//','/', $destinationFile);
 			if (strpos($sourceFile, 'https')===0) {
 				$sourceFile = str_replace('\\','/', $sourceFile);
 				$sourceFile = str_replace('//','/', $sourceFile);
