@@ -644,7 +644,7 @@
 	 *
 	 */
 	function SetVariableConstant ($Name, $ID, $FileName, $Namespace='') {
-		if ($Namespace<>'') {
+		if ($Namespace <> '') {
 		   $Namespace = str_replace('::','/',$Namespace).'/';
 		}
 		$FileNameFull = IPS_GetKernelDir().'scripts/'.$Namespace.$FileName;
@@ -659,7 +659,7 @@
 		}
 		$pos = $pos + strlen($Name);
 		while (substr($FileContent, $pos, 1) < "0" or substr($FileContent, $pos, 1) > "9") {
-			$pos = $pos+1;
+			$pos = $pos + 1;
 		}
 		$FileContentNew = substr($FileContent, 0, $pos).$ID.substr($FileContent, $pos+5);
 
@@ -900,6 +900,7 @@
 		   $objectType = $object['ObjectType'];
 		   if ($objectType == 1 /*Instance*/) {
 		      $instance = IPS_GetInstance($childrenId);
+			  echo print_r($instance, 1);
 		      if ($instance['ModuleInfo']['ModuleID'] == '{3565B1F2-8F7B-4311-A4B6-1BF1D868F39E}') {
 		         $wfcId = $childrenId;
 		         return $wfcId;
