@@ -214,6 +214,7 @@
 	// Search for Last Repositories
 	// ---------------------------------------------------------------------------------------------
 	function SearchLastRepositories() {
+		global $_IPS;
 		IPSUtils_Include ("IPSModuleManager.class.php", "IPSLibrary::install::IPSModuleManager");
 		$moduleManager = $_IPS['MODULEMANAGER'];
 		$infos    = $moduleManager->GetModuleInfos();
@@ -280,6 +281,7 @@
 
 	// ------------------------------------------------------------------------------------------------
 	function RemoveBlanksBeforePHPTags ($file, $namespace) {
+		global $_IPS;
 		$moduleManager = $_IPS['MODULEMANAGER'];
 
 		if ($namespace<>'') {

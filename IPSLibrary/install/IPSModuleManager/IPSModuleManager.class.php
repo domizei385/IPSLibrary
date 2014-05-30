@@ -65,7 +65,6 @@
 			global $_IPS;
 			$_IPS['ABORT_ON_ERROR'] = true;
 			$_IPS['MODULEMANAGER']  = $this;
-			echo "Setup Module manager: ".var_dump($_IPS).PHP_EOL;
 
 			if ($moduleName=='') {
 				$moduleName = 'IPSModuleManager';
