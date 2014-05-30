@@ -34,7 +34,7 @@
 
 	// Installation of ModuleManager
 	echo 'Installation of ModuleManager'.PHP_EOL;
-	include_once IPS_GetKernelDir().'scripts\\IPSLibrary\\app\\core\\IPSUtils\\IPSUtils.inc.php';
+	include_once IPS_GetKernelDir().'scripts/IPSLibrary/app/core/IPSUtils/IPSUtils.inc.php';
 	IPSUtils_Include ('IPSModuleManager.class.php', 'IPSLibrary::install::IPSModuleManager');
 	$moduleManager = new IPSModuleManager('IPSModuleManager');
 	$moduleManager->LoadModule($remoteRepository, true);
