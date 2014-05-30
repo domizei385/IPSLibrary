@@ -507,49 +507,52 @@
 			$resultList = array();
 			$scriptList = $this->fileConfigHandler->GetValueDef($fileKey, $fileTypeSection, array());
 
-			foreach ($scriptList as $idx=>$script) {
-				if ($script<>'') {
-					if ($fileKey=='DefaultFiles') {
-						$script   = 'Default/'.$script;
-					} elseif ($fileKey=='ExampleFiles') {
-						$script   = 'Examples/'.$script;
-					} else {
-					}
-
-					switch ($fileTypeSection) {
-						case 'App':
-							$namespace = $this->fileConfigHandler->GetValue(IPSConfigHandler::MODULENAMESPACE);
-							$fullScriptName   = $baseDirectory.'::'.$namespace.'::'.$script;
-							break;
-						case 'Config':
-							$namespace = $this->fileConfigHandler->GetValue(IPSConfigHandler::MODULENAMESPACE);
-							$namespace = str_replace('IPSLibrary::app', 'IPSLibrary::config', $namespace);
-							$fullScriptName   = $baseDirectory.'::'.$namespace.'::'.$script;
-							break;
-						case 'WebFront':
-							if ($baseDirectory==IPS_GetKernelDir().'scripts/') {
-								$fullScriptName   = IPS_GetKernelDir().'webfront/user/'.$this->moduleName.'/'.$script;
-							} else {
-								$fullScriptName   = $baseDirectory.'/IPSLibrary/webfront/'.$this->moduleName.'/'.$script;
-							}
-							break;
-						case 'Install':
-							if ($fileKey=='DefaultFiles' or $fileKey=='ExampleFiles') {
-								$fullScriptName   = $baseDirectory.'/IPSLibrary/install/InitializationFiles/'.$script;
-							} else {
-								$fullScriptName   = $baseDirectory.'/IPSLibrary/install/InstallationScripts/'.$script;
-							}
-							break;
-						default:
-							die('Unknown fileTypeSection '.$fileTypeSection);
-					}
-					$fullScriptName   = str_replace('::', '/', $fullScriptName);
-					$fullScriptName   = str_replace('//', '/', $fullScriptName);
-					$fullScriptName   = str_replace('\\\\', '\\', $fullScriptName);
-					$fullScriptName   = str_replace('\\192.168', '\\\\192.168', $fullScriptName);
-
-					$resultList[] = $fullScriptName;
+			foreach ($scriptList as $idx => $script) {
+				if ($script=='') {
+					continue;
 				}
+				$script = str_replace('\\', '/', $script);
+				
+				if ($fileKey=='DefaultFiles') {
+					$script   = 'Default/'.$script;
+				} elseif ($fileKey=='ExampleFiles') {
+					$script   = 'Examples/'.$script;
+				} else {
+				}
+
+				switch ($fileTypeSection) {
+					case 'App':
+						$namespace = $this->fileConfigHandler->GetValue(IPSConfigHandler::MODULENAMESPACE);
+						$fullScriptName   = $baseDirectory.'::'.$namespace.'::'.$script;
+						break;
+					case 'Config':
+						$namespace = $this->fileConfigHandler->GetValue(IPSConfigHandler::MODULENAMESPACE);
+						$namespace = str_replace('IPSLibrary::app', 'IPSLibrary::config', $namespace);
+						$fullScriptName   = $baseDirectory.'::'.$namespace.'::'.$script;
+						break;
+					case 'WebFront':
+						if ($baseDirectory==IPS_GetKernelDir().'scripts/') {
+							$fullScriptName   = IPS_GetKernelDir().'webfront/user/'.$this->moduleName.'/'.$script;
+						} else {
+							$fullScriptName   = $baseDirectory.'/IPSLibrary/webfront/'.$this->moduleName.'/'.$script;
+						}
+						break;
+					case 'Install':
+						if ($fileKey=='DefaultFiles' or $fileKey=='ExampleFiles') {
+							$fullScriptName   = $baseDirectory.'/IPSLibrary/install/InitializationFiles/'.$script;
+						} else {
+							$fullScriptName   = $baseDirectory.'/IPSLibrary/install/InstallationScripts/'.$script;
+						}
+						break;
+					default:
+						die('Unknown fileTypeSection '.$fileTypeSection);
+				}
+				$fullScriptName   = str_replace('::', '/', $fullScriptName);
+				$fullScriptName   = str_replace('//', '/', $fullScriptName);
+				$fullScriptName   = str_replace('\\\\', '\\', $fullScriptName);
+				$fullScriptName   = str_replace('\\192.168', '\\\\192.168', $fullScriptName);
+
+				$resultList[] = $fullScriptName;
 			}
 			return $resultList;
 		}
