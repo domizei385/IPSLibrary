@@ -187,7 +187,7 @@
 				}
 			} else {
 				$this->logHandler->Log("Copy $sourceFile --> $destinationFile");
-				$result = @copy ($sourceFile, $destinationFile);
+				$result = copy ($sourceFile, $destinationFile);
 				if ($result===false and $raiseError) {
 					throw new IPSFileHandlerException('Error while copy File '.$sourceFile.' to '.$destinationFile,
 					                                  E_USER_ERROR);
