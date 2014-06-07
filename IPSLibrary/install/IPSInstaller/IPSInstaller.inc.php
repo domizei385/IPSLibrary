@@ -87,7 +87,6 @@
 				IPS_DeleteVariable($ObjectId);
 				break;
 			case 3: // Script
-				EmptyCategory($ObjectId);
 				IPS_DeleteScript($ObjectId, false);
 				break;
 			case 4: // Event
@@ -677,7 +676,7 @@
 	 * @return integer ID des Timers
 	 *
 	 */
-	function CreateTimer_OnceADay ($Name, $ParentId, $Hour, $Minute=0, $Active=true) {
+	function CreateTimer_OnceADay ($Name, $ParentId, $Hour, $Minute = 0) {
 		$TimerId = @IPS_GetObjectIDByIdent(Get_IdentByName($Name), $ParentId);
 		if ($TimerId === false) $TimerId = @IPS_GetEventIDByName($Name, $ParentId);
 		if ($TimerId === false) {
@@ -688,10 +687,10 @@
 			if (!IPS_SetEventCyclic($TimerId, 2 /**Daily*/, 1,0,0,0,0)) {
 				Error ("IPS_SetEventCyclic failed !!!");
 			}
-			if (!IPS_SetEventCyclicTimeBounds($TimerId, mktime($Hour, $Minute, 0), 0)) {
-				Error ("IPS_SetEventCyclicTimeBounds failed !!!");
+			if (!IPS_SetEventCyclicTimeFrom($TimerId, $Hour, $Minute, 0)) {
+				Error ("IPS_SetEventCyclicTimeFrom failed !!!");
 			}
-			IPS_SetEventActive($TimerId, $Active);
+			IPS_SetEventActive($TimerId, true);
 			Debug ('Created Timer '.$Name.'='.$TimerId."");
 		}
 		return $TimerId;
