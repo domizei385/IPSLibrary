@@ -7,7 +7,7 @@
 	 * @version
 	 * Version 2.50.1, 31.01.2012<br/>
 	 *
-	 * Dieses Script enth�lt die Funktionen, die die Messages zu den diversen Outputs schicken.
+	 * Dieses Script enth?lt die Funktionen, die die Messages zu den diversen Outputs schicken.
 	 *
 	 */
 	include_once "IPSLogger_Constants.inc.php";
@@ -20,7 +20,7 @@
 			$DebugTrace = debug_backtrace();
 			foreach ($DebugTrace as $Idx=>$Stack) {
 				if (array_key_exists('line', $Stack) and array_key_exists('function', $Stack) and array_key_exists('file', $Stack)) {
-					$File     = str_replace('scripts\\', '', str_replace(IPS_GetKernelDir(), '', $Stack['file']));
+					$File     = str_replace('scripts/', '', str_replace(IPS_GetKernelDir(), '', $Stack['file']));
 					$Function = $Stack['function'];
 					$Line     = str_pad($Stack['line'],3,' ', STR_PAD_LEFT);
 					$StackTxt  .= c_lf."  $Line in $File (call $Function)";
@@ -42,7 +42,7 @@
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_WriteFile($Directory, $File, $Text, $ID_OutEnabled) {
 		if ($Directory == "") {
-			$Directory = IPS_GetKernelDir().'logs\\';
+			$Directory = IPS_GetKernelDir().'logs/';
 		}
 		if(($FileHandle = fopen($Directory.$File, "a")) === false) {
 			SetValue($ID_OutEnabled, false);
@@ -376,9 +376,9 @@
 		}
 
     $Context = str_replace("'",'"',$Context);
-    $Context = str_replace("\\","\\\\",$Context);
+    $Context = str_replace("/","//",$Context);
     $Msg = str_replace("'",'"',$Msg);
-    $Msg = str_replace("\\",'\\\\',$Msg);
+    $Msg = str_replace("/",'//',$Msg);
 
 	  $Context = substr($Context,0,150);
 	  $Msg = substr($Msg,0,1024);
@@ -491,6 +491,8 @@
                 call_user_func_array("IPSLogger_Out".$name, $parameters);
             }
         }
+		@IPSLogger_OutSysLog($LogLevel, $LogType, $Context, $Msg.$StackTxt);
+		@IPSLogger_OutMySQL($LogLevel, $LogType, $Context, $Msg.$StackTxt);
     }
     
     function IPSLogger_normalizeContext($Context) {
