@@ -16,27 +16,22 @@
 	 * along with the IPSLibrary. If not, see http://www.gnu.org/licenses/gpl.txt.
 	 */    
 
-	/**@ingroup ipsmodulemanagergui
+	/**@ingroup ipscam
 	 * @{
 	 *
-	 * @file          IPSModuleManagerGUI_SearchUpdates.ips.php
+	 * @file          IPSCam_StorePicture.ips.php
 	 * @author        Andreas Brauneis
 	 * @version
-	 *  Version 2.50.1, 29.10.2012<br/>
+	 *  Version 2.50.1, 09.08.2012<br/>
 	 *
-	 * Sucht nach Module Updates der IPSLibrary
+	 * Speichern des aktuell gewählten Kamera Bildes 
 	 *
 	 */
 
-	include_once "IPSModuleManagerGUI.inc.php";
+	include_once "IPSCam.inc.php";
 
-	IPSUtils_Include ("IPSModuleManager.class.php", "IPSLibrary::install::IPSModuleManager");
+	$camManager = new IPSCam_Manager();
+	$camManager->PictureStore(3);
 
-	$moduleManager = new IPSModuleManager('', '', sys_get_temp_dir().'/', true);
-	$versionHandler = $moduleManager->VersionHandler();
-	$versionHandler->BuildKnownModules();
-
-	IPSModuleManagerGUI_SetPage(IPSMMG_ACTION_OVERVIEW);
-	
     /** @}*/
 ?>
