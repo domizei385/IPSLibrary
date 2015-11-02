@@ -7,16 +7,73 @@
     
     define("MAPPING_FUNCTION", "__function__");
     define("YAMAHA_LIST_PAGE_SIZE", 8);
-    define("cmd_XML", "COMMAND_XML");
+    define("CMD", "COMMAND");
     define("cmd_ZONE", "COMMAND_ZONE");
     define("Message_Command_Parameter_Zone", '(Zone=%s) => %s');
     define("Message_Commands_Execution", 'Executing %d command%s took %.4f seconds.');
+	
+class Command {
+	public function __construct($xmlPattern, $telnetPattern, $type, $value) {
+        $this->xmlPattern = $xmlPattern;
+		$this->telnetPattern = $telnetPattern;
+		$this->type = $type;
+		$this->value = $value;
+	}
+	
+	public function hasTelnet() {
+		return $this->type == CommandBuilder::$telnet;
+	}
+	
+	public function hasXML() {
+		return $this->type == CommandBuilder::$xml;
+	}
+	
+	public function buildXML() {
+		return str_replace("{1}", $this->value, $this->xmlPattern);
+	}
+	
+	public function buildTelnet() {
+		//$val = str_replace("{zone}", $zone, $this->telnetPattern);
+		return str_replace("{value}", $this->value, $val);
+	}
+}
+	
+class CommandBuilder {
+	public static $xml = "xml";
+	public static $telnet = "telnet";
 
+	private $xmlPattern;
+	private $telnetPattern;
+	
+	public static function withCommand($command) {
+		$builder = new CommandBuilder();
+		return $builder->withXMLPattern($command->xmlPattern)->withTelnetPattern($command->telnetPattern)->withType($command->type)->build();
+	}
+	
+	public function withXMLPattern($pattern) {
+		$this->xmlPattern = $pattern;
+		return $this;
+	}
+	
+	public function withTelnetPattern($pattern) {
+		$this->telnetPattern = $pattern;
+		return $this;
+	}
+	
+	public function withType($type) {
+		$this->type = $type;
+		return $this;
+	}
+	
+	public function build($value) {
+		return new Command($this->xmlPattern, $this->telnetPattern, $this->type, $value);
+	}
+}
+	
 class YamahaCommand {
-    public function __construct($name, $prefix, $suffix, $parameterMapping, $isInternal) {
+    public function __construct($name, $command, $parameterMapping, $isInternal) {
         $this->name = $name;
-        $this->prefix = $prefix;
-        $this->suffix = $suffix;
+        $this->command = $command;
         $this->mapping = $parameterMapping;
         $this->isInternal = $isInternal;
     }
@@ -54,63 +111,77 @@ class Yamaha_Receiver {
     }
     
     private function buildCommand($cmd, $parameter) {
-        $command = $this->commands[$cmd]->prefix;
         //IPSLogger_Com(__file__, "rawcmd:".print_r($cmd, true));
-        //IPSLogger_Com(__file__, "rawMap:".print_r($this->commands[$cmd], true));
+        //IPSLogger_Wrn(__file__, "rawMap:".print_r($this->commands[$cmd], true));
+		$commandValue = "";
         if($this->commands[$cmd]->requiresMapping()) {
             $thisParameterMapping = $this->commands[$cmd]->mapping;
             if(isset($thisParameterMapping[MAPPING_FUNCTION])) {
-                $command .= $thisParameterMapping[MAPPING_FUNCTION]($parameter);
-            } else if(isset($thisParameterMapping[$parameter])) {
-                $command .= $thisParameterMapping[$parameter];
+                $commandValue = $thisParameterMapping[MAPPING_FUNCTION]($parameter);
+            } else if(is_array($thisParameterMapping) && isset($thisParameterMapping[$parameter])) {
+                $commandValue = $thisParameterMapping[$parameter];
             } else if($thisParameterMapping != "") {
-                $command .= $thisParameterMapping;
+                $commandValue = $thisParameterMapping;
             } else {
                 // no mapping -> directly used supplied parameter
-                $command .= $parameter;
+                $commandValue = $parameter;
             }
         }
         else {
-            $command .= $parameter;
+            $commandValue = $parameter;
         }
-        $command .= $this->commands[$cmd]->suffix;
-        return $command;
+		$result = $this->commands[$cmd]->command->build($commandValue);
+		//IPSLogger_Wrn(__file__, "result: ".print_r($this->commands[$cmd], true));
+        //IPSLogger_Wrn(__file__, "result: ".print_r($result, true));
+        return $result;
     }
     
     private function buildCommandForZone($cmd, $parameter, $targetZone, $delay = 100) {
-        return array(cmd_XML => $this->buildCommand($cmd, $parameter), cmd_ZONE => $targetZone, cmd_DELAY => $delay);
+        return array(CMD => $this->buildCommand($cmd, $parameter), cmd_ZONE => $targetZone, cmd_DELAY => $delay);
     }
+	
+	private function getXmlCmdBuilder() {
+		$commandBuilder = new CommandBuilder();
+		$commandBuilder->withType(CommandBuilder::$xml);
+		return $commandBuilder;
+	}
     
     private function setupCommands() {
         $commands = array();
-        $commands[] = new YamahaCommand("MUTE", "<Volume><Mute>", "</Mute></Volume>", array("ON" => "On", "OFF" => "Off"), false);
-        $commands[] = new YamahaCommand("PWR", "<Power_Control><Power>", "</Power></Power_Control>", array("ON" => "On", "OFF" => "Standby"), false);
-        $commands[] = new YamahaCommand("VOL", "<Volume><Lvl>", "</Lvl></Volume>",
+		
+        $commands[] = new YamahaCommand("MUTE", $this->getXmlCmdBuilder()->withXMLPattern("<Volume><Mute>{1}</Mute></Volume>")->withTelnetPattern("{zone}:MUTE:{value}"), array("ON" => "On", "OFF" => "Off"), false);
+        $commands[] = new YamahaCommand("PWR", $this->getXmlCmdBuilder()->withXMLPattern("<Power_Control><Power>{1}</Power></Power_Control>"), array("ON" => "On", "OFF" => "Standby"), false);
+        $commands[] = new YamahaCommand("VOL", $this->getXmlCmdBuilder()->withXMLPattern("<Volume><Lvl>{1}</Lvl></Volume>"),
             array(MAPPING_FUNCTION => function($val) {
                 $rVal = (int) $val * 10;
                 return "<Val>$rVal</Val><Exp>1</Exp><Unit>dB</Unit>";
             }), false);
-        $commands[] = new YamahaCommand("INP", "<Input><Input_Sel>", "</Input_Sel></Input>", null, false);
-        $commands[] = new YamahaCommand("CHAN", "<List_Control><Direct_Sel>", "</Direct_Sel></List_Control>",
+		$commands[] = new YamahaCommand("BASS", $this->getXmlCmdBuilder()->withTelnetPattern("{zone}:SPBASS:{value}"),
+            array(MAPPING_FUNCTION => function($val) {
+                $rVal = (int) $val * 10;
+                return "$rVal";
+            }), false);
+        $commands[] = new YamahaCommand("INP", $this->getXmlCmdBuilder()->withXMLPattern("<Input><Input_Sel>{1}</Input_Sel></Input>"), null, false);
+        $commands[] = new YamahaCommand("CHAN", $this->getXmlCmdBuilder()->withXMLPattern("<List_Control><Direct_Sel>{1}</Direct_Sel></List_Control>"),
             array(MAPPING_FUNCTION => function($val) {
                 $iVal = intval($val);
                 $item = $val % YAMAHA_LIST_PAGE_SIZE;
                 return "Line_$item";
             }), false);
-        $commands[] = new YamahaCommand("xNETRADIO_SELECT_LINE", "<List_Control><Direct_Sel>", "</Direct_Sel></List_Control>",
+        $commands[] = new YamahaCommand("xNETRADIO_SELECT_LINE", $this->getXmlCmdBuilder()->withXMLPattern("<List_Control><Direct_Sel>{1}</Direct_Sel></List_Control>"),
             array(MAPPING_FUNCTION => function($val) {
                 $iVal = intval($val);
                 $item = $val % YAMAHA_LIST_PAGE_SIZE;
                 return "Line_$item";
             }), false);
-        $commands[] = new YamahaCommand("xNETRADIO_JUMP_LINE", "<List_Control><Jump_Line>", "</Jump_Line></List_Control>",
+        $commands[] = new YamahaCommand("xNETRADIO_JUMP_LINE", $this->getXmlCmdBuilder()->withXMLPattern("<List_Control><Jump_Line>{1}</Jump_Line></List_Control>"),
             array(MAPPING_FUNCTION => function($val) {
                 $iVal = intval($val);
                 $page = $iVal;
                 return $page;
             }), false);
-        $commands[] = new YamahaCommand("xNETRADIO_JUMP_BACK", "<List_Control><Cursor>", "</Cursor></List_Control>", "back", false);
-        $commands[] = new YamahaCommand("xNETRADIO_LIST_INFO", "<List_Info>", "</List_Info>",
+        $commands[] = new YamahaCommand("xNETRADIO_JUMP_BACK", $this->getXmlCmdBuilder()->withXMLPattern("<List_Control><Cursor>{1}</Cursor></List_Control>"), "Back", false);
+        $commands[] = new YamahaCommand("xNETRADIO_LIST_INFO", $this->getXmlCmdBuilder()->withXMLPattern("<List_Info>{1}</List_Info>"),
             array(MAPPING_FUNCTION => function($val) {
                 return "GetParam";
             }), false);
@@ -134,26 +205,64 @@ class Yamaha_Receiver {
     private function initInternalMapping() {
         $this->commandScriptMapping = array(
             'CHAN'	=> function($cmd, $parameter, $zone) {
+				IPSLogger_SetLoggingLevel(__file__, c_LogLevel_Trace);
+				
                 $cmdArray = array();
                 
                 // get current list information
                 $listInfo = $this->getListStatus($zone);
-                IPSLogger_Trc(__file__, "Current Menu: ".((int) $listInfo->Menu_Layer)." - ".$listInfo->Menu_Name);
                 
-                // make sure we have "Bookmarks" selected
-                if(((int) $listInfo->Menu_Layer) > 1 && $listInfo->Menu_Name != "Bookmarks") {
-                    //IPSLogger_Trc(__file__, "Go To root folder");
-                    // go to root folder
-                    for($i = ((int) $listInfo->Menu_Layer); $i > 1; $i--) {
-                        $cmdArray[] = $this->buildCommandForZone("xNETRADIO_JUMP_BACK", 1, $zone, 800);
+                $menuName = $listInfo->Menu_Name;
+                $menuLayer = (int) $listInfo->Menu_Layer;
+                IPSLogger_Trc(__file__, "Current Menu: $menuLayer - ".$menuName);
+                
+                $menuTree = array(array("Bookmarks", 1), array("My__Favorites", 1));                
+                
+                // ROOT level is implicitly above Bookmarks -> adding 1 depth
+                $treeDepth = count($menuTree) + 1;
+                $inCorrectMenu = false;
+                $inRoot = $treeDepth == 1;
+                $traverseFrom = 1;
+                if(!$inRoot) {
+                    for ($i = $treeDepth; $i > 1; $i--) {
+                        if($menuName == $menuTree[$i - 2][0]) {
+                            if($i == $menuLayer) {
+                                // we are in a correct menu already
+                                IPSLogger_Trc(__file__, "Found expected menu $menuName");
+                                $inCorrectMenu = true;
+                                $traverseFrom = $i;
+                                if($i == $treeDepth) {
+                                    $traverseFrom = $i;
+                                } else {
+                                    // need to travers down starting from $i
+                                    IPSLogger_Trc(__file__, "Set traverse from to $i => '$menuName'");
+                                }
+                                break;
+                            } else {
+                                // wrong menu tree -> go to root
+                                break;
+                            }
+                        } else {
+                            // name mismatch -> check one level up
+                            IPSLogger_Trc(__file__, "Unexpected menu -> Checking root level");
+                        }
                     }
                 }
-                
-                if(((int) $listInfo->Menu_Layer) == 1) {
-                    // go to bookmarks folder
-                    //IPSLogger_Trc(__file__, "Go To bookmarks folder");
-                    $cmdArray[] = $this->buildCommandForZone("xNETRADIO_SELECT_LINE", 1, $zone, 800);
+                if(!$inCorrectMenu && !$inRoot) {
+                    // we are in the wrong menu -> go to root and start over
+                    IPSLogger_Trc(__file__, "Going To root folder from $menuLayer");
+                    // go to root folder
+                    for($j = $menuLayer; $j > 1; $j--) {
+                        $cmdArray[] = $this->buildCommandForZone("xNETRADIO_JUMP_BACK", 1, $zone, 1000);
+                    }
+                    $inRoot = true;
                 }
+                for($i = $traverseFrom; $i < $treeDepth; $i++) {
+                    IPSLogger_Trc(__file__, "Going to folder '" . $menuTree[$i - 1][0] . "'");
+                    $selectLine = $menuTree[$i - 1][1];
+                    $cmdArray[] = $this->buildCommandForZone("xNETRADIO_SELECT_LINE", $selectLine, $zone, 1000);
+                }
+                //------------------------------------------------------
                 
                 // get the current cursor position and position it on the correct page
                 $currentLine = $listInfo->Cursor_Position->Current_Line;
@@ -163,13 +272,13 @@ class Yamaha_Receiver {
                 $currentPage = (int) ($currentLine / YAMAHA_LIST_PAGE_SIZE);
                 $newPage = (int) ($parameter / YAMAHA_LIST_PAGE_SIZE);
                 
-                //IPSLogger_Trc(__file__, "MaxLine: ".$listInfo->Cursor_Position->Max_Line);
-                //IPSLogger_Trc(__file__, "Parameter: ".$parameter);
-                //IPSLogger_Trc(__file__, "Cline/Nline: ".$currentLine."/".$parameter);
-                //IPSLogger_Trc(__file__, "Cpage/Npage: ".$currentPage."/".$newPage);
+                IPSLogger_Trc(__file__, "MaxLine: ".$listInfo->Cursor_Position->Max_Line);
+                IPSLogger_Trc(__file__, "Parameter: ".$parameter);
+                IPSLogger_Trc(__file__, "Cline/Nline: ".$currentLine."/".$parameter);
+                IPSLogger_Trc(__file__, "Cpage/Npage: ".$currentPage."/".$newPage);
                 if($currentPage != $newPage) {
-                    //IPSLogger_Trc(__file__, "Changing page");
-                    $cmdArray[] = $this->buildCommandForZone('xNETRADIO_JUMP_LINE', $parameter, $zone, 800);
+                    IPSLogger_Trc(__file__, "Changing page");
+                    $cmdArray[] = $this->buildCommandForZone('xNETRADIO_JUMP_LINE', $parameter, $zone, 1000);
                 }
                 
                 // select the proper entry in the current folder and on the current page
@@ -238,11 +347,13 @@ class Yamaha_Receiver {
         
         $results = array();
         foreach($commandArray as $commandItem) {
-            //IPSLogger_Com(__file__, sprintf(Message_Command_Parameter_Zone, $commandItem[cmd_ZONE], $commandItem[cmd_XML]));
+            //IPSLogger_Com(__file__, sprintf(Message_Command_Parameter_Zone, $commandItem[cmd_ZONE], $commandItem[CMD]));
             
             //IPSLogger_Com(__file__, "CommandItem: ".print_r($commandItem, true));
-            if(array_key_exists(cmd_XML, $commandItem) && array_key_exists(cmd_ZONE, $commandItem)) {
-                $result = $this->sendData($commandItem[cmd_XML], $commandItem[cmd_ZONE], isset($commandItem[cmd_HTTP_TYPE]) ? $commandItem[cmd_HTTP_TYPE] : "PUT");
+            if(array_key_exists(CMD, $commandItem) && array_key_exists(cmd_ZONE, $commandItem)) {
+				$cmdString = $commandItem[CMD]->buildXML();
+				IPSLogger_Com(__file__, "cmdString: ".$cmdString);
+                $result = $this->sendData($cmdString, $commandItem[cmd_ZONE], isset($commandItem[cmd_HTTP_TYPE]) ? $commandItem[cmd_HTTP_TYPE] : "PUT");
                 $results[] = $result;
             }
             
@@ -273,7 +384,7 @@ class Yamaha_Receiver {
         $msg .= "</$zone>";
         $msg .= '</YAMAHA_AV>';
         
-        IPSLogger_Com(__file__, 'Send Message to Yamaha: '.$msg.' (Command='.$command.')');
+        IPSLogger_Com(__file__, 'Sending message to Yamaha: '.$msg.' (Command='.$command.')');
         return post_request($this->targetUrl, $msg);
     }
 }

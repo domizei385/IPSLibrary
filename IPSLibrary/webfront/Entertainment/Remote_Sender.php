@@ -72,7 +72,7 @@
 				}
 
 				$.ajax({ type: "POST",
-						url: "http://"+serverAddr+"/user/Entertainment/Remote_Receiver.php",
+						url: "https://"+serverAddr+"/user/Entertainment/Remote_Receiver.php",
 						data: "rc_action=rc_cmd&id="+obj_id+"&rc_name="+rc_name+"&rc_button="+rc_button
 														   +"&rc_name2="+rc_name2+"&rc_button2="+rc_button2
 														   +"&rc_name3="+rc_name3+"&rc_button3="+rc_button3
@@ -85,7 +85,7 @@
 				rc_program    = $('#'+obj_id).attr('rc_program');
 				rc_devicename = $('#'+obj_id).attr('rc_devicename');
 				$.ajax({ type: "POST",
-						url: "http://"+serverAddr+"/user/Entertainment/Remote_Receiver.php",
+						url: "https://"+serverAddr+"/user/Entertainment/Remote_Receiver.php",
 						data: "rc_action=rc_program&id="+obj_id
 										+"&rc_program="+rc_program+"&rc_devicename="+rc_devicename
 										+"&rc_name="+rc_name+"&rc_button="+rc_button
@@ -99,7 +99,7 @@
 			// -----------------------------------------------------------------------------------------------------
 			} else {
 			  $.ajax({ type: "POST",
-					   url: "http://"+serverAddr+"/user/Entertainment/Remote_Receiver.php",
+					   url: "https://"+serverAddr+"/user/Entertainment/Remote_Receiver.php",
 					  data: "rc_action=rc_other&id="+obj_id });
 		   }
 
