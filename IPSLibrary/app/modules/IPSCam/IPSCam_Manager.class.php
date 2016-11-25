@@ -84,10 +84,6 @@
 			$this->config             = IPSCam_GetConfiguration();
 		}
 
-		public function ActivateCamera($cameraIdx, $mode) {
-			$this->SetCamera($cameraIdx);
-			$this->SetMode($mode);
-		}
 		/**
 		 * @public
 		 *
@@ -96,6 +92,7 @@
 		 * @param integer $variableId ID der Variable die geändert werden soll
 		 * @param variant $value Neuer Wert der Variable
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function ChangeSetting($variableId, $value) {
 			$variableIdent = IPS_GetIdent($variableId);
 			switch ($variableIdent) {
@@ -109,14 +106,14 @@
 				case IPSCAM_VAR_MODE:
 					$this->SetMode($value);
 					break;
-				case IPSCAM_VAR_SIZE:
+				case IPSCAM_VAR_PICTSIZE:
 					SetValue($variableId, $value);
 					$mode = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon));
 					$cameraIdx = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon));
 					if ($mode==IPSCAM_MODE_PICTURE) {
 						$this->PictureRefresh($cameraIdx);
 					}
-					$this->RefreshDisplay($cameraIdx);
+					$this->RefreshWebFront($cameraIdx);
 					break;
 				case IPSCAM_VAR_MODELIVE:
 				case IPSCAM_VAR_MODEPICT:
@@ -177,7 +174,6 @@
 					$this->SetTimer ($cameraIdx, 'PictureReset', $value);
 					break;
 				case IPSCAM_VAR_PICTHIST:
-				case IPSCAM_VAR_PICTSIZE:
 					SetValue($variableId, $value);
 					break;
 				default:
@@ -185,6 +181,13 @@
 			}
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
+		public function ActivateCamera($cameraIdx, $mode) {
+			$this->SetCamera($cameraIdx);
+			$this->SetMode($mode);
+		}
+
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function SetCamera ($cameraIdx) {
 			$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
 			if (GetValue($variableIdCamSelect)<>$cameraIdx) {
@@ -196,17 +199,18 @@
 					SetValue($variableIdCamPower, $valueCamPower);
 				}
 				$mode = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon));
-				$this->RefreshDisplayByMode($mode);
+				$this->RefreshWebFrontByMode($mode);
 				if ($mode==IPSCAM_MODE_HISTORY) {
 					$this->NavigatePictures(IPSCAM_DAY_FORWARD, 1);
 				} elseif ($mode==IPSCAM_MODE_PICTURE) {
 					$this->PictureRefresh($cameraIdx);
 				} else {
 				}
-				$this->RefreshDisplay($cameraIdx);
+				$this->RefreshWebFront($cameraIdx);
 			}
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function SetMode ($mode) {
 			$variableIdMode = IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon);
 			if (GetValue($variableIdMode)<>$mode) {
@@ -228,13 +232,23 @@
 				$this->SetTimer ($cameraIdx, 'PictureReset', GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTRESET, $categoryIdCam)), 'Once');
 
 				// Refresh 
-				$this->RefreshDisplayByMode($mode);
-				$this->RefreshDisplay($cameraIdx);
+				$this->RefreshWebFrontByMode($mode);
+				if ($mode==IPSCAM_MODE_HISTORY) {
+					$this->NavigatePictures(IPSCAM_DAY_FORWARD, 1);
+				} elseif ($mode==IPSCAM_MODE_PICTURE) {
+					$this->PictureRefresh($cameraIdx);
+				} else {
+				}
+				$this->RefreshWebFront($cameraIdx);
 			}
 		}
-
-		
-		private function RefreshDisplay($cameraIdx) {
+	
+		// ----------------------------------------------------------------------------------------------------------------------------
+		private function RefreshWebFront($cameraIdx) {
+			// Check if Camera is currently selected in WebFront, otherwise nothing has to be refreshed
+			if (GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon)) <> $cameraIdx) {
+				return;
+			}
 			$mode            = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon));
 			$variableIdHtml  = IPS_GetObjectIDByIdent(IPSCAM_VAR_HTML, $this->categoryIdCommon);
 			$variableIdHtml2 = IPS_GetObjectIDByIdent(IPSCAM_VAR_IHTML, $this->categoryIdCommon);
@@ -271,7 +285,8 @@
 
 		}
 
-		private function RefreshDisplayByMode($mode) {
+		// ----------------------------------------------------------------------------------------------------------------------------
+		private function RefreshWebFrontByMode($mode) {
 			$mode      = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon));
 			$cameraIdx = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon));
 
@@ -354,22 +369,28 @@
 			
 			IPSUtils_Include ('IPSInstaller.inc.php', 'IPSLibrary::install::IPSInstaller');
 			$categoryIdCam      = IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams);
-			CreateLink('Bild Aktualisierung',    IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTREF, $categoryIdCam), $instanceIdSettings, 10);
+
+			CreateLink('Bildgröße',      		 IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE,  $categoryIdCam), $instanceIdCamSettings, 10);
+
+			CreateLink('Uhrzeit',                IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVTIME,   $categoryIdCam), $instanceIdNavigation, 30);
+
+			CreateLink('Bild Aktualisierung',    IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTREF,   $categoryIdCam), $instanceIdSettings, 10);
 			CreateLink('Autom. Bild Speicherung',IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSTORE, $categoryIdCam), $instanceIdSettings, 20);
 			CreateLink('Aktivierung Bild Modus', IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTRESET, $categoryIdCam), $instanceIdSettings, 30);
-			CreateLink('Bild Historisierung',    IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTHIST, $categoryIdCam), $instanceIdSettings, 40);
-			CreateLink('Bildgröße',              IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, $categoryIdCam), $instanceIdSettings, 50);
-			CreateLink('Zeitraffer Modus',       IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTMODE, $categoryIdCam), $instanceIdSettings, 60);
-			CreateLink('Zeitraffer Abstand',     IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTTIME, $categoryIdCam), $instanceIdSettings, 70);
-			CreateLink('Zeitraffer Zeitraum',    IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTHIST, $categoryIdCam), $instanceIdSettings, 80);
-			CreateLink('Zeitraffer Bildgröße',   IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTSIZE, $categoryIdCam), $instanceIdSettings, 90);
+			CreateLink('Bild Historisierung',    IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTHIST,  $categoryIdCam), $instanceIdSettings, 40);
+			CreateLink('Bildgröße',              IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE,  $categoryIdCam), $instanceIdSettings, 50);
+			CreateLink('Zeitraffer Modus',       IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTMODE,   $categoryIdCam), $instanceIdSettings, 60);
+			CreateLink('Zeitraffer Abstand',     IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTTIME,   $categoryIdCam), $instanceIdSettings, 70);
+			CreateLink('Zeitraffer Zeitraum',    IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTHIST,   $categoryIdCam), $instanceIdSettings, 80);
+			CreateLink('Zeitraffer Bildgröße',   IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTSIZE,   $categoryIdCam), $instanceIdSettings, 90);
 		}
 
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function SetTimer ($cameraIdx, $timerPrefix, $timerValue, $startTime=null) {
-			$timerName = $timerPrefix.'_'.$cameraIdx;
-			$scriptId = IPSUtil_ObjectIDByPath('Program.IPSLibrary.app.modules.IPSCam.IPSCam_ActionScript');
-			$timerId = @IPS_GetObjectIDByIdent($timerName, $scriptId);
+			$timerName  = $timerPrefix.'_'.$cameraIdx;
+			$scriptId   = IPSUtil_ObjectIDByPath('Program.IPSLibrary.app.modules.IPSCam.IPSCam_ActionScript');
+			$timerId    = @IPS_GetObjectIDByIdent($timerName, $scriptId);
 			if ($timerValue==IPSCAM_VAL_DISABLED) {
 				if ($timerId!==false) {
 					IPS_DeleteEvent($timerId);
@@ -387,11 +408,11 @@
 				if ($startTime=='Once') {
 					$nextTime = strtotime('+'.$timerValue.' sec');
 					IPS_SetEventCyclic($timerId, 2 /**Daily*/, 1 /*Unused*/,0 /*Unused*/,0 /*Unused*/,0 /*Einmalig*/,0 /*Unused*/);
-					IPS_SetEventCyclicTimeBounds($timerId, mktime(date('H',$nextTime), date('i',$nextTime), date('s',$nextTime)), 0);
+					IPS_SetEventCyclicTimeFrom($timerId, date('H',$nextTime),  date('i',$nextTime), date('s',$nextTime));
 				} elseif ($hours==24) {
 					$startTime = explode(':', $startTime);
 					IPS_SetEventCyclic($timerId, 2 /**Daily*/, 1 /*Unused*/,0 /*Unused*/,0 /*Unused*/,0 /*Einmalig*/,0 /*Unused*/);
-					IPS_SetEventCyclicTimeBounds($timerId, mktime($startTime[0], $startTime[1], 0), 0);
+					IPS_SetEventCyclicTimeFrom($timerId, $startTime[0], $startTime[1], 0);
 				} elseif ($hours > 0) {
 					IPS_SetEventCyclic($timerId, 2 /*Daily*/, 1 /*Unused*/,0 /*Unused*/,0 /*Unused*/,3 /*TimeType Hours*/,$hours /*Stunden*/);
 				} elseif ($mins > 0) {
@@ -410,23 +431,24 @@
 		 *
 		 * @param integer $timerId ID des Timers
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function ActivateTimer($timerId) {
 			$timerName = IPS_GetName($timerId);
 			$timerNames = explode('_', $timerName);
-			if (count($timerNames) < 2 ) { trigger_error('Unknown Timer '.$timerName.'(ID='.$timerId.')'); }
-			$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
-			$variableIdMode      = IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon);
+			if (count($timerNames) < 2 ) { 
+				trigger_error('Unknown Timer '.$timerName.'(ID='.$timerId.')'); 
+			}
 			$cameraIdx = $timerNames[1];
 			switch($timerNames[0]) {
 				case 'PictureRefresh';
-					if (GetValue($variableIdMode)==IPSCAM_MODE_PICTURE and GetValue($variableIdCamSelect)==$cameraIdx) {
-						$this->PictureRefresh($cameraIdx);
-					}
+					$this->PictureRefresh($cameraIdx);
 					break;
 				case 'PictureStore';
 					$this->PictureStore($cameraIdx);
 					break;
 				case 'PictureReset';
+					$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
+					$variableIdMode      = IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon);
 					if (GetValue($variableIdMode)<>IPSCAM_MODE_PICTURE and GetValue($variableIdCamSelect)==$cameraIdx) {
 						$this->PictureReset($cameraIdx);
 					}
@@ -446,44 +468,46 @@
 		 *
 		 * @param integer $cameraIdx Index der Kamera
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function PictureRefresh($cameraIdx=null) {
 			$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
+
 			// If CameraIndex is NULL use selected
 			if ($cameraIdx===null) {
 				$cameraIdx = GetValue($variableIdCamSelect);
 			}
-			// if Camera is NOT selected - Set Selected
-			if (GetValue($variableIdCamSelect) <> $cameraIdx) {
-				$this->SetCamera($cameraIdx);
-			}
-			// Switch to Image Mode
-			$variableIdMode      = IPS_GetObjectIDByIdent(IPSCAM_VAR_MODE, $this->categoryIdCommon);
-			if (GetValue($variableIdMode) == IPSCAM_MODE_PICTURE) {
-				$size = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_SIZE, $this->categoryIdCommon));
-				$this->StorePicture($cameraIdx, 'Picture', $size, 'Current', 'Common');
-			}
 
-			$result = IPS_SemaphoreEnter('IPSCam_'.$cameraIdx, 5000);
-            if ($result) {
-                // Set Media File for Common View
-                $variableIdMedia = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMPICT, $this->categoryIdCommon);
-                IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/CommonDummy.jpg', false);
-                IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Common.jpg', false);
+			// Download Camera Image
+			$size       = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams)));
+			$result     = $this->DownloadImageFromCam($cameraIdx, 'Picture', $size, 'Current');
 
-                // Copy Image to webfront
-                Copy (IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Common.jpg',
-                      IPS_GetKernelDir().'webfront/user/IPSCam/ImageCurrent.jpg');
+			if ($result) {
+				// Set Media File for Camera View
+				$categoryIdCam   = IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams);
+				$variableIdMedia = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMPICT, $categoryIdCam);
+				IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/CurrentDummy.jpg', false);
+				IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Current.jpg', false);
+				
+				// If Camera is selected, Refresh WebFront
+				if (GetValue($variableIdCamSelect)==$cameraIdx) {
+					// Copy Image to Common File
+					Copy (IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Current.jpg', 
+						  IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Common.jpg');
+						
+						
+					// Copy Image to webfront
+					Copy (IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Current.jpg',
+						  IPS_GetKernelDir().'webfront/user/IPSCam/ImageCurrent.jpg');
 
-                // Set Media File for Camera View
-                $categoryIdCam   = IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams);
-                $variableIdMedia = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMPICT, $categoryIdCam);
-                IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/CurrentDummy.jpg', false);
-                IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Current.jpg', false);
+					// Set Media File for Common View
+					$variableIdMedia = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMPICT, $this->categoryIdCommon);
+					IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/CommonDummy.jpg', false);
+					IPS_SetMediaFile($variableIdMedia, IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Common.jpg', false);
 
-                $this->RefreshDisplay($cameraIdx);
-
-                IPS_SemaphoreLeave('IPSCam_'.$cameraIdx);
+					$this->RefreshWebFront($cameraIdx);
+				}
             }
+			return $result;
 		}
 
 		/**
@@ -493,26 +517,32 @@
 		 *
 		 * @param integer $cameraIdx Index der Kamera
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function PictureStore($cameraIdx=null) {
 			$result = false;
-			$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
-			if ($cameraIdx==null) {
-				$cameraIdx = GetValue($variableIdCamSelect);
+			if ($cameraIdx===null) {
+				$cameraIdx = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon));
 			}
-			//if (GetValue($variableIdCamSelect) <> $cameraIdx) {
-			//	$this->SetCamera($cameraIdx);
-			//}
-			$categoryIdCam = IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams);
-			$size          = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, $categoryIdCam));
+
+			$size          = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams)));
 			if (IPSCam_BeforeStorePicture($cameraIdx)) {
-				$result = $this->StorePicture($cameraIdx, 'History', $size);
+				$result  = $this->PictureRefresh($cameraIdx);
+			
+				if ($result) {
+					Copy (IPS_GetKernelDir().'Cams/'.$cameraIdx.'/Picture/Current.jpg', 
+					      IPS_GetKernelDir().'Cams/'.$cameraIdx.'/History/'.date(IPSCAM_NAV_DATEFORMATFILE).'.jpg');
+				}
+
+				$this->NavigatePictures(IPSCAM_NAV_FORWARD, 100, $cameraIdx);
+
 				IPSCam_AfterStorePicture($cameraIdx);
 			}
 			return $result;
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function IsCameraAvailable($cameraIdx=null) {
-			if ($cameraIdx==0) {
+			if ($cameraIdx===null) {
 				$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
 				$cameraIdx = GetValue($variableIdCamSelect);
 			}
@@ -534,9 +564,10 @@
 			return $cameraAvailable;
 		}
 		
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function PictureReset($cameraIdx) {
 			$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
-			if ($cameraIdx==0) {
+			if ($cameraIdx===null) {
 				$cameraIdx = GetValue($variableIdCamSelect);
 			}
 			if (GetValue($variableIdCamSelect) <> $cameraIdx) {
@@ -545,16 +576,23 @@
 			$this->SetMode (IPSCAM_MODE_PICTURE);
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function PictureMotion($cameraIdx) {
 			$categoryIdCam = IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams);
 			$size          = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_MOTSIZE, $categoryIdCam));
 			if (IPSCam_BeforeStoreMotion($cameraIdx)) {
-				$this->StorePicture($cameraIdx, 'MotionCapture', $size);
+				$this->DownloadImageFromCam($cameraIdx, 'MotionCapture', $size, date(IPSCAM_NAV_DATEFORMATFILE));
 				IPSCam_AfterStoreMotion($cameraIdx);
 			}
 		}
 
-		private function StorePicture($cameraIdx, $directoryName, $size, $fileName=null, $fileName2=null) {
+		// ----------------------------------------------------------------------------------------------------------------------------
+		private function GetLoggingTextFromURL($url) {
+			return str_replace(parse_url($url, PHP_URL_USER).":".parse_url($url, PHP_URL_PASS)."@", "<<user:pwd>>",$url);
+		}
+		
+		// ----------------------------------------------------------------------------------------------------------------------------
+		private function DownloadImageFromCam($cameraIdx, $directoryName, $size, $fileName) {
 			if (!$this->IsCameraAvailable($cameraIdx)) {
 				return false;
 			}
@@ -564,50 +602,45 @@
 				$componentParams = $this->config[$cameraIdx][IPSCAM_PROPERTY_COMPONENT];
 				$component       = IPSComponent::CreateObjectByParams($componentParams);
 				$urlPicture      = $component->Get_URLPicture($size);
-				if ($fileName == null) {
-					$fileName = date(IPSCAM_NAV_DATEFORMATFILE);
-				}
-				$localFile        = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/'.$directoryName.'/'.$fileName.'.jpg';
-				$localFile2       = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/'.$directoryName.'/'.$fileName2.'.jpg';
-				IPSLogger_Trc(__file__, "Copy $urlPicture --> $localFile");
+				$localFile       = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/'.$directoryName.'/'.$fileName.'.jpg';
+				IPSLogger_Trc(__file__, "Copy ".$this->GetLoggingTextFromURL($urlPicture)." --> $localFile");
 
 				$curl_handle=curl_init();
 				curl_setopt($curl_handle, CURLOPT_URL, $urlPicture);
-				curl_setopt($curl_handle, CURLOPT_CONNECTTIMEOUT, 2);
-				curl_setopt($curl_handle, CURLOPT_TIMEOUT, 3);  
+				curl_setopt($curl_handle, CURLOPT_CONNECTTIMEOUT, 20);
+				curl_setopt($curl_handle, CURLOPT_TIMEOUT, 30);  
 				curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER,true);
 				curl_setopt($curl_handle, CURLOPT_SSL_VERIFYPEER, false);
 				curl_setopt($curl_handle, CURLOPT_FAILONERROR, true);
 				$fileContent = curl_exec($curl_handle);
-				if ($fileContent===false) {
-					IPSLogger_Dbg (__file__, 'File '.$urlPicture.' could NOT be found on the Server !!!');
-					return false;
-				}
 				curl_close($curl_handle);
 
+				if ($fileContent===false) {
+					IPS_SemaphoreLeave('IPSCam_'.$cameraIdx);
+					IPSLogger_Dbg (__file__, 'File '.$this->GetLoggingTextFromURL($urlPicture).' could NOT be found on the Server !!!');
+					return false;
+				}
 				$result = file_put_contents($localFile, $fileContent);
+				IPS_SemaphoreLeave('IPSCam_'.$cameraIdx);
+
 				if ($result===false) {
 					trigger_error('Error writing File Content to '.$localFile);
 				}
-				if ($fileName2!==null) {
-					$result = file_put_contents($localFile2, $fileContent);
-					if ($result===false) {
-						trigger_error('Error writing File Content to '.$localFile2);
-					}
-				}
-				IPS_SemaphoreLeave('IPSCam_'.$cameraIdx);
 				return $localFile;
 			}
 			return false;
 		}
 
-		private function NavigatePictures($direction, $count) {
-			$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
-			$cameraIdx  = GetValue($variableIdCamSelect);
+		// ----------------------------------------------------------------------------------------------------------------------------
+		public function NavigatePictures($direction, $count, $cameraIdx=null) {
+			if ($cameraIdx===null) {
+				$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
+				$cameraIdx = GetValue($variableIdCamSelect);
+			}
 			$directory  = IPS_GetKernelDir().'/Cams/'.$cameraIdx.'/History/';
 			
-			$variableIdNavFile = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVFILE, $this->categoryIdCommon);
-			$variableIdNavTime = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVTIME, $this->categoryIdCommon);
+			$variableIdNavFile = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVFILE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams));
+			$variableIdNavTime = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVTIME, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams));
 			$navTime    = GetValue($variableIdNavFile);
 			$navPos     = -1;
 
@@ -649,19 +682,32 @@
 				$navTime = mktime(substr($navFile,9,2),  substr($navFile,11,2), substr($navFile,13,2), substr($navFile,4,2), substr($navFile,6,2), substr($navFile,0,4));
 				SetValue($variableIdNavTime, date(IPSCAM_NAV_DATEFORMATDISP, $navTime));
 
-			   $variableIdMedia   = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMHIST, $this->categoryIdCommon);
-			   $mediaFileName     = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/History/'.$navFile.'.jpg';
-			   $userFileName      = IPS_GetKernelDir().'WebFront/User/IPSCam/ImageHistory.jpg';
-			   IPS_SetMediaFile($variableIdMedia, $mediaFileName, false);
-			   copy ($mediaFileName, $userFileName);
-			}
+				$mediaFileName     = IPS_GetKernelDir().'Cams/'.$cameraIdx.'/History/'.$navFile.'.jpg';
+				$userFileName      = IPS_GetKernelDir().'webfront/user/IPSCam/ImageHistory.jpg';  
 
-			$this->RefreshDisplay($cameraIdx);
+				$variableIdMedia   = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMHIST, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams));
+				IPS_SetMediaFile($variableIdMedia, $mediaFileName, false);
+				copy ($mediaFileName, $userFileName);
+
+				$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
+				if (GetValue($variableIdCamSelect)==$cameraIdx) {
+				   IPS_SetMediaFile(IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMHIST, $this->categoryIdCommon), $mediaFileName, false);
+				   SetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVTIME, $this->categoryIdCommon), date(IPSCAM_NAV_DATEFORMATDISP, $navTime));
+				}
+
+			}
+			$this->RefreshWebFront($cameraIdx);
 		}
 
-		private function NavigateDays($direction, $count) {
-			$variableIdNavFile   = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVFILE, $this->categoryIdCommon);
-			$variableIdNavTime   = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVTIME, $this->categoryIdCommon);
+		// ----------------------------------------------------------------------------------------------------------------------------
+		public function NavigateDays($direction, $count, $cameraIdx=null) {
+			if ($cameraIdx===null) {
+				$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
+				$cameraIdx = GetValue($variableIdCamSelect);
+			}
+
+			$variableIdNavFile = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVFILE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams));
+			$variableIdNavTime = IPS_GetObjectIDByIdent(IPSCAM_VAR_NAVTIME, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams));
 			//012345678901234
 			//YYYYMMDD_HHMISS
 			$navTime = GetValue($variableIdNavFile);
@@ -676,9 +722,10 @@
 			
 			SetValue($variableIdNavTime, date(IPSCAM_NAV_DATEFORMATDISP, $navTime));
 			SetValue($variableIdNavFile, date(IPSCAM_NAV_DATEFORMATFILE, $navTime));
-			$this->NavigatePictures(IPSCAM_NAV_FORWARD, 1);
+			$this->NavigatePictures(IPSCAM_NAV_FORWARD, 1, $cameraIdx);
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function PurgeFilesByDirectory($directory, $days) {
 			$refDate = strtotime('-'.$days.' day', time());
 			$refDate = date(IPSCAM_NAV_DATEFORMATFILE, $refDate);
@@ -709,6 +756,7 @@
 		 * Löschen der nicht mehr benötigten Bilder in der History
 		 *
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function PurgeFiles() {
 			set_time_limit(600); // Set PHP Time Limit of 10 Minutes for Purging of Files
 			IPSLogger_Inf(__file__, 'Purge History and MotionCapture Camera Files');
@@ -724,9 +772,9 @@
 			}
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function GenerateMovies() {
 		}
-
 		
 		/**
 		 * @public
@@ -738,13 +786,13 @@
 		 *    IPSCAM_URL_LIVE      ... URL des aktuellen Livestreams
 		 *    IPSCAM_URL_PICTURE   ... URL des aktuellen Bildes
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function GetURL($cameraIdx, $urlType) {
 			if ($cameraIdx===null) {
 				$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
 				$cameraIdx = GetValue($variableIdCamSelect);
 			}
-			$variableIdSize = IPS_GetObjectIDByIdent(IPSCAM_VAR_SIZE, $this->categoryIdCommon);
-			$size = GetValue($variableIdSize);
+			$size            = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams)));;
 			$componentParams = $this->config[$cameraIdx][IPSCAM_PROPERTY_COMPONENT];
 			$component       = IPSComponent::CreateObjectByParams($componentParams);
 			switch($urlType) {
@@ -779,10 +827,12 @@
 			return $url;
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function GetCameraProperty($cameraIdx, $property, $mandatory=false) {
 			if (array_key_exists($property, $this->config[$cameraIdx])) {
 				$value = $this->config[$cameraIdx][$property];
-				$value = htmlentities($value, ENT_COMPAT, 'ISO-8859-1');
+				if(mb_detect_encoding($value, 'UTF-8, ISO-8859-1') !== 'UTF-8')
+					$value = htmlentities($value, ENT_COMPAT, 'ISO-8859-1');
 			} elseif ($mandatory) {
 				trigger_error('Property "'.$property.'" could NOT be found for CameraIdx='.$cameraIdx);
 			} else {
@@ -799,6 +849,7 @@
 		 * @param integer $cameraIdx Index der Kamera
 		 * @param string $actionProperty Action Property
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function ProcessCommand($cameraIdx, $actionProperty) {
 			$action    = $this->GetCameraProperty($cameraIdx, $actionProperty);
 
@@ -809,7 +860,7 @@
 					IPS_RunScript($id);
 				} else {
 					IPSLogger_Dbg(__file__, 'Execute Camera Action "'.$action.'"');
-					$module    = IPSModule::CreateObjectByParams($action);
+					$module    = IPSLibraryModule::CreateObjectByParams($action);
 					$module->ExecuteButton();
 				}
 			}
@@ -823,6 +874,7 @@
 		 * @param integer $cameraIdx Index der Kamera
 		 * @param string $urlType Type der URL zur Richtungsangabe
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function Move($cameraIdx, $urlType) {
 			$curl_handle=curl_init();
 			curl_setopt($curl_handle, CURLOPT_URL, $this->GetURL($cameraIdx, $urlType));
@@ -835,6 +887,7 @@
 			$fileContent = curl_exec($curl_handle);
 		}
 		
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function GetHTMLCameraMap($cameraIdx, $width, $height) {
 			$return = '';
 			$camType    = $this->GetCameraProperty($cameraIdx, IPSCAM_PROPERTY_TYPE);
@@ -867,6 +920,7 @@
 			return $return;
 		}
 		
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function GetHTMLMobileButtonNavi($cameraIdx, $idButton, $iconName) {
 			$return  = '        <td class="camData">'.PHP_EOL;
 			$return .= '            <div id="'.$idButton.'" cameraidx="'.$cameraIdx.'" class="camButton">'.PHP_EOL;
@@ -879,6 +933,7 @@
 			return $return;
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function GetHTMLMobileButton($cameraIdx, $property, $idButton) {
 			$return = '';
 			$return .= '        <td class="camData">'.PHP_EOL;
@@ -904,13 +959,14 @@
 		 * @param boolean $showNavigationButtons definiert ob Buttons zur Steuerung beweglicher Kameras erzeugt werden sollen 
 		 * @return string HTML Code zur Anzeige
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function GetHTMLMobile($cameraIdx, $size, $showPreDefPosButtons, $showCommandButtons, $showNavigationButtons) {
 			if ($cameraIdx===null) {
 				$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
 				$cameraIdx = GetValue($variableIdCamSelect);
 			}
 			if ($size===null) {
-				$size = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_SIZE, $this->categoryIdCommon));
+				$size = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams)));
 			}
 			$camType         = $this->GetCameraProperty($cameraIdx, IPSCAM_PROPERTY_TYPE, true);
 			$componentParams = $this->config[$cameraIdx][IPSCAM_PROPERTY_COMPONENT];
@@ -970,9 +1026,10 @@
 			return $return;
 		}
 
+		// ----------------------------------------------------------------------------------------------------------------------------
 		private function GetStreamHeight($cameraIdx, $size=null, $calcWindowHeight=true, $showPreDefPosButtons=true, $showCommandButtons=true, $showNavigationButtons=false) {
 			if ($size===null) {
-				$size = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_SIZE, $this->categoryIdCommon));
+				$size = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams)));
 			}
 			switch($size) {
 				case IPSCAM_SIZE_SMALL:
@@ -1024,13 +1081,14 @@
 		 * @param boolean $showNavigationButtons definiert ob Buttons zur Steuerung beweglicher Kameras erzeugt werden sollen 
 		 * @return string HTML Code zur Anzeige
 		 */
+		// ----------------------------------------------------------------------------------------------------------------------------
 		public function GetHTMLWebFront($cameraIdx, $size, $showPreDefPosButtons, $showCommandButtons, $showNavigationButtons) {
 			if ($cameraIdx===null) {
 				$variableIdCamSelect = IPS_GetObjectIDByIdent(IPSCAM_VAR_CAMSELECT, $this->categoryIdCommon);
 				$cameraIdx = GetValue($variableIdCamSelect);
 			}
 			if ($size===null) {
-				$size = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_SIZE, $this->categoryIdCommon));
+				$size = GetValue(IPS_GetObjectIDByIdent(IPSCAM_VAR_PICTSIZE, IPS_GetObjectIDByIdent($cameraIdx, $this->categoryIdCams)));
 			}
 			$camType         = $this->GetCameraProperty($cameraIdx, IPSCAM_PROPERTY_TYPE, true);
 			$componentParams = $this->config[$cameraIdx][IPSCAM_PROPERTY_COMPONENT];

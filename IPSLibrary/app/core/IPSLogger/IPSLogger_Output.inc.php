@@ -7,7 +7,7 @@
 	 * @version
 	 * Version 2.50.1, 31.01.2012<br/>
 	 *
-	 * Dieses Script enth?lt die Funktionen, die die Messages zu den diversen Outputs schicken.
+	 * Dieses Script enthält die Funktionen, die die Messages zu den diversen Outputs schicken.
 	 *
 	 */
 	include_once "IPSLogger_Constants.inc.php";
@@ -160,7 +160,8 @@
 
 	// ---------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutHtml($LogLevel, $LogType, $Context, $Msg) {
-			$Msg  = htmlentities($Msg, ENT_COMPAT, 'ISO-8859-1');
+			if(mb_detect_encoding($Msg, 'UTF-8, ISO-8859-1') !== 'UTF-8')
+				$Msg  = htmlentities($Msg, ENT_COMPAT, 'UTF-8');
 			$Msg  = str_replace("\n", "<BR> ", $Msg);
 			switch ($LogType) {
 				case c_LogType_Test: 			$Msg = '<DIV style="padding-left:45px;">'.$Msg.'</DIV>'; break;
@@ -260,7 +261,7 @@
 			$prowl = new Prowl(c_Key_ProwlService); 
 			$prowl->push(array(	'application'	=> 'IP-Symcon',
  										'event'			=> $Context,
-										'description'	=> utf8_encode($Msg),
+										'description'	=> $Msg,
 										'priority'		=> 0));
 		}
 	
@@ -271,14 +272,15 @@
 		$prowl = new Prowl(c_Key_ProwlService);
 		$prowl->push(array(	'application'	=> 'IP-Symcon',
 									'event'			=> $Event,
-									'description'	=> utf8_encode($Description),
+									'description'	=> $Description,
 									'priority'		=> $Priority));
 
 	}
 	
 	// ----------------------------------------------------------------------------------------------------------------------------
 	function IPSLogger_OutProgram($Msg, $HtmlId, $LogId, $MsgCount, $FontSize=10) {
-			$Msg          = htmlentities($Msg, ENT_COMPAT, 'ISO-8859-1');
+			if(mb_detect_encoding($Msg, 'UTF-8, ISO-8859-1') !== 'UTF-8')
+				$Msg          = htmlentities($Msg, ENT_COMPAT, 'ISO-8859-1');
 			$Msg          = str_replace("\n", "<BR>", $Msg);
 			$MsgList      = GetValue($HtmlId);
 			$TablePrefix  = '<table width="100%" style="font-family:courier; font-size:'.$FontSize.'px;">';
